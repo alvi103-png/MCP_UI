@@ -1,8 +1,9 @@
 // Bloque 4 · IA en local: el modelo se ejecuta en el navegador.
 // Las reseñas no salen del dispositivo, no hay coste por petición y funciona sin conexión.
 
-// Modelo pequeño (unos 320 MB) para los navegadores sin IA integrada
-const MODELO_WEBGPU = 'onnx-community/gemma-3-270m-it-ONNX';
+// Modelo pequeño (unos 470 MB) para los navegadores sin IA integrada.
+// Qwen3.5 0.8B: multilingüe y de 2026. Gemma 4 E2B escribe mejor, pero pesa unos 3 GB.
+const MODELO_WEBGPU = 'onnx-community/Qwen3.5-0.8B-Text-ONNX';
 const TRANSFORMERS_JS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2';
 
 const textoDeReseñas = (producto) =>
@@ -52,60 +53,45 @@ async function resumirConChrome(producto, { alProgresar, alEscribir }) {
   throw new Error('Pendiente: el resumen con la API de Chrome se implementa en el bloque 4 (src/ia-local.js).');
 }
 
-// ── Plan B, ya implementado: un modelo pequeño con Transformers.js ─────────
-// Sirve para los navegadores sin IA integrada. Léelo: es el mismo patrón
-// (cargar modelo → generar en streaming) con una librería en vez de una API nativa.
+// ── Plan B: un modelo pequeño con Transformers.js ─────────────────────────
+// Para los navegadores sin IA integrada. Es el mismo patrón (cargar modelo →
+// generar en streaming) con una librería en vez de una API nativa.
 
 /** El modelo se carga una sola vez y se reutiliza */
 let generador;
 
 async function resumirConTransformers(producto, { alProgresar, alEscribir }) {
-  const { pipeline, TextStreamer } = await import(/* @vite-ignore */ TRANSFORMERS_JS);
-
-  // WebGPU si hay GPU disponible; si no, WebAssembly (más lento)
-  let device = 'wasm';
-  try {
-    if (await navigator.gpu?.requestAdapter()) device = 'webgpu';
-  } catch {}
-
-  generador ??= await pipeline('text-generation', MODELO_WEBGPU, {
-    device,
-    dtype: 'q4',
-    progress_callback(progreso) {
-      if (progreso.status === 'progress_total') alProgresar?.(Math.round(progreso.progress));
-    },
-  });
-
-  let texto = '';
-  const streamer = new TextStreamer(generador.tokenizer, {
-    skip_prompt: true,
-    skip_special_tokens: true,
-    callback_function(trozo) {
-      texto += trozo;
-      alEscribir?.(texto);
-    },
-  });
-
-  const salida = await generador(
-    [
-      {
-        role: 'system',
-        content:
-          'Resumes reseñas de clientes en español. Responde solo con dos frases cortas: lo mejor y lo peor del producto. Sin listas ni introducciones.',
-      },
-      { role: 'user', content: `Producto: ${producto.nombre}\n\nReseñas:\n${textoDeReseñas(producto)}` },
-    ],
-    { max_new_tokens: 120, do_sample: false, streamer },
-  );
-
-  return {
-    texto: salida[0].generated_text.at(-1).content.trim(),
-    motor: `Gemma 3 270M · Transformers.js (${device})`,
-  };
+  // TODO 4: resume con Transformers.js.
+  //   const { pipeline, TextStreamer } = await import(/* @vite-ignore */ TRANSFORMERS_JS)
+  //
+  //   WebGPU si hay GPU; si no, WebAssembly (más lento). Con shader-f16 el modelo pesa menos:
+  //   const gpu = await navigator.gpu?.requestAdapter().catch(() => null)
+  //   const device = gpu ? 'webgpu' : 'wasm'
+  //   const dtype = gpu?.features.has('shader-f16') ? 'q4f16' : 'q4'
+  //
+  //   generador ??= await pipeline('text-generation', MODELO_WEBGPU, {
+  //     device, dtype,
+  //     // progreso.status === 'progress_total' → alProgresar?.(Math.round(progreso.progress))
+  //     progress_callback(progreso) { … },
+  //   })
+  //
+  //   El streamer recibe el texto según se genera:
+  //   const streamer = new TextStreamer(generador.tokenizer, {
+  //     skip_prompt: true, skip_special_tokens: true,
+  //     callback_function(trozo) { texto += trozo; alEscribir?.(texto) },
+  //   })
+  //
+  //   const salida = await generador([
+  //     { role: 'system', content: 'Resumes reseñas … en una sola frase: «Los clientes valoran …, aunque …»' },
+  //     { role: 'user', content: `Producto: ${producto.nombre}\n\nReseñas:\n${textoDeReseñas(producto)}` },
+  //   ], { max_new_tokens: 120, do_sample: false, repetition_penalty: 1.05, streamer })
+  //
+  // Devuelve { texto: salida[0].generated_text.at(-1).content.trim(), motor: `Qwen3.5 0.8B · Transformers.js (${device})` }
+  throw new Error('Pendiente: el resumen con Transformers.js se implementa en el bloque 4 (src/ia-local.js).');
 }
 
 /**
- * TODO 4 (extra): saca los puntos fuertes y débiles como JSON con la Prompt API.
+ * TODO 5 (extra): saca los puntos fuertes y débiles como JSON con la Prompt API.
  *   - LanguageModel.availability(opciones) y LanguageModel.create(opciones)
  *   - sesion.prompt(texto, { responseConstraint: <JSON Schema> }) obliga al modelo
  *     a responder con la forma { pros: string[], contras: string[] }

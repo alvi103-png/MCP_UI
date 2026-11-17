@@ -1,8 +1,9 @@
 // Bloque 4 · IA en local: el modelo se ejecuta en el navegador.
 // Las reseñas no salen del dispositivo, no hay coste por petición y funciona sin conexión.
 
-// Modelo pequeño (unos 320 MB) para los navegadores sin IA integrada
-const MODELO_WEBGPU = 'onnx-community/gemma-3-270m-it-ONNX';
+// Modelo pequeño (unos 470 MB) para los navegadores sin IA integrada.
+// Qwen3.5 0.8B: multilingüe y de 2026. Gemma 4 E2B escribe mejor, pero pesa unos 3 GB.
+const MODELO_WEBGPU = 'onnx-community/Qwen3.5-0.8B-Text-ONNX';
 const TRANSFORMERS_JS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2';
 
 const textoDeReseñas = (producto) =>
@@ -66,15 +67,15 @@ let generador;
 async function resumirConTransformers(producto, { alProgresar, alEscribir }) {
   const { pipeline, TextStreamer } = await import(/* @vite-ignore */ TRANSFORMERS_JS);
 
-  // WebGPU si hay GPU disponible; si no, WebAssembly (más lento)
-  let device = 'wasm';
-  try {
-    if (await navigator.gpu?.requestAdapter()) device = 'webgpu';
-  } catch {}
+  // WebGPU si hay GPU disponible; si no, WebAssembly (más lento).
+  // Si la GPU calcula en media precisión (shader-f16), el modelo pesa menos: 470 MB en vez de 550 MB
+  const gpu = await navigator.gpu?.requestAdapter().catch(() => null);
+  const device = gpu ? 'webgpu' : 'wasm';
+  const dtype = gpu?.features.has('shader-f16') ? 'q4f16' : 'q4';
 
   generador ??= await pipeline('text-generation', MODELO_WEBGPU, {
     device,
-    dtype: 'q4',
+    dtype,
     progress_callback(progreso) {
       if (progreso.status === 'progress_total') alProgresar?.(Math.round(progreso.progress));
     },
@@ -95,16 +96,16 @@ async function resumirConTransformers(producto, { alProgresar, alEscribir }) {
       {
         role: 'system',
         content:
-          'Resumes reseñas de clientes en español. Responde solo con dos frases cortas: lo mejor y lo peor del producto. Sin listas ni introducciones.',
+          'Resumes reseñas de clientes de una tienda online. Responde en español con una sola frase con esta forma: «Los clientes valoran …, aunque …». Primero lo que más gusta y, tras «aunque», la queja principal. Usa solo lo que dicen las reseñas.',
       },
       { role: 'user', content: `Producto: ${producto.nombre}\n\nReseñas:\n${textoDeReseñas(producto)}` },
     ],
-    { max_new_tokens: 120, do_sample: false, streamer },
+    { max_new_tokens: 120, do_sample: false, repetition_penalty: 1.05, streamer },
   );
 
   return {
     texto: salida[0].generated_text.at(-1).content.trim(),
-    motor: `Gemma 3 270M · Transformers.js (${device})`,
+    motor: `Qwen3.5 0.8B · Transformers.js (${device})`,
   };
 }
 

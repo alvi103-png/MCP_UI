@@ -33,11 +33,13 @@ Arriba tienes dos pestañas: **Tu código** (la carpeta `inicio`, la que vas a t
 Comprueba qué tiene tu navegador. En la consola de DevTools:
 
 ```js
-'Summarizer' in self && (await Summarizer.availability());
+'Summarizer' in self && (await Summarizer.availability({ outputLanguage: 'es' }));
 // 'available' | 'downloadable' | 'downloading' | 'unavailable'
 ```
 
-> Requisitos de Gemini Nano: Chrome de escritorio, 22 GB libres en disco y GPU con más de 4 GB de VRAM (o 16 GB de RAM y 4 núcleos). Si te sale `unavailable`, no pasa nada: el plan B con Transformers.js ya está implementado y el botón funcionará igualmente.
+> Requisitos de Gemini Nano: Chrome de escritorio, 22 GB libres en disco y GPU con más de 4 GB de VRAM (o 16 GB de RAM y 4 núcleos). Si te sale `unavailable`, no pasa nada: ve al paso 4, el plan B con Transformers.js, que funciona en cualquier navegador moderno.
+
+En **Tu código** el botón **Resumir reseñas en local** todavía no hace nada: te dice qué falta. En **Ver solución** ya funciona.
 
 ## Pasos
 
@@ -90,20 +92,57 @@ return { texto, motor: 'Gemini Nano · API Summarizer de Chrome' };
 
 Abre un producto y pulsa el botón. Luego desconecta el wifi y vuelve a probar.
 
-### 4. Lee el plan B
+### 4. Plan B: Transformers.js
 
-`resumirConTransformers()` ya está hecho. Es el mismo patrón con una librería:
+Completa `resumirConTransformers()`. Es el mismo patrón (cargar el modelo → generar en streaming) con una librería en vez de una API del navegador:
 
 ```js
-const { pipeline } = await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2');
+const { pipeline, TextStreamer } = await import(/* @vite-ignore */ TRANSFORMERS_JS);
 
-const generador = await pipeline('text-generation', 'onnx-community/gemma-3-270m-it-ONNX', {
-  device: 'webgpu',   // o 'wasm' si no hay GPU
-  dtype: 'q4',        // cuantización: menos peso, algo menos de calidad
+// WebGPU si hay GPU; si no, WebAssembly (más lento)
+const gpu = await navigator.gpu?.requestAdapter().catch(() => null);
+const device = gpu ? 'webgpu' : 'wasm';
+// Cuantización: unos 470 MB en vez de 3 GB, algo menos de calidad
+const dtype = gpu?.features.has('shader-f16') ? 'q4f16' : 'q4';
+
+// El modelo se descarga y se carga una sola vez
+generador ??= await pipeline('text-generation', MODELO_WEBGPU, {
+  device,
+  dtype,
+  progress_callback(progreso) {
+    if (progreso.status === 'progress_total') alProgresar?.(Math.round(progreso.progress));
+  },
 });
+
+let texto = '';
+const streamer = new TextStreamer(generador.tokenizer, {
+  skip_prompt: true,
+  skip_special_tokens: true,
+  callback_function(trozo) {
+    texto += trozo;
+    alEscribir?.(texto);
+  },
+});
+
+const salida = await generador(
+  [
+    {
+      role: 'system',
+      content:
+        'Resumes reseñas de clientes de una tienda online. Responde en español con una sola frase con esta forma: «Los clientes valoran …, aunque …». Primero lo que más gusta y, tras «aunque», la queja principal. Usa solo lo que dicen las reseñas.',
+    },
+    { role: 'user', content: `Producto: ${producto.nombre}\n\nReseñas:\n${textoDeReseñas(producto)}` },
+  ],
+  { max_new_tokens: 120, do_sample: false, repetition_penalty: 1.05, streamer },
+);
+
+return {
+  texto: salida[0].generated_text.at(-1).content.trim(),
+  motor: `Qwen3.5 0.8B · Transformers.js (${device})`,
+};
 ```
 
-Compara los dos resúmenes: un modelo de 270 millones de parámetros se queda corto donde Gemini Nano acierta. **Esa es la limitación**: en local, el tamaño del modelo lo paga el usuario.
+Qwen3.5 0.8B (800 millones de parámetros, multilingüe) es de lo mejor que cabe en una descarga razonable. Compara su resumen con el de Gemini Nano: a veces mezcla o se inventa algún detalle. Gemma 4 E2B escribe mejor, pero son unos 3 GB. **Esa es la limitación**: en local, el tamaño del modelo lo paga el usuario.
 
 ### 5. Extra: JSON garantizado con la Prompt API
 
