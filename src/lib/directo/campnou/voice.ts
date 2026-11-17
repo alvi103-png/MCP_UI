@@ -170,7 +170,7 @@ export function createVoiceMode(options: VoiceOptions = {}) {
 
   function ensureWorker() {
     if (worker) return worker
-    worker = new Worker(new URL('./whisper-worker.js', import.meta.url), { type: 'module' })
+    worker = new Worker(new URL('../whisper-worker.js', import.meta.url), { type: 'module' })
     worker.addEventListener('message', (e: MessageEvent<WorkerMessage>) => {
       const msg = e.data
       if (msg.status === 'complete' || (msg.status === 'error' && msg.requestId != null)) {
