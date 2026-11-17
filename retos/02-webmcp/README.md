@@ -104,6 +104,8 @@ El navegador genera el esquema a partir de los campos. El agente rellena el form
 
 ## Pruébalo
 
+**Con el asistente**: el panel de la derecha es un chat con `gpt-6-luna` que hace de agente del navegador. Pide las herramientas a `document.modelContext.getTools()`, se las pasa al modelo y ejecuta las que elija con `executeTool()`. Pídele cosas en lenguaje natural («añade dos botellas térmicas al carrito») y verás cada llamada, sus argumentos y lo que recibe el modelo. También respeta las anotaciones: pide permiso antes de una herramienta con `consequentialHint` y marca como no fiable lo que devuelve una con `untrustedContentHint`. Necesita el token del taller en `retos/config.js`. Lo añade el plugin de `retos/asistente/` y no hace falta tocarlo.
+
 **En DevTools**: pestaña *Application* → *WebMCP*. Verás las herramientas y podrás ejecutarlas con *Run tool*.
 
 **En la consola**:

@@ -96,4 +96,6 @@ Cada reto se arranca desde `inicio/` y su demo tiene dos pestañas, **Tu código
 - Reto 1: el probador (`http://localhost:3001`) habla con `/mcp` o con `/solucion/mcp`, que es el `crearServidor()` de `solucion/server.js`.
 - Retos 2–4: el plugin de Vite `retos/ver-solucion.js` (en el `vite.config.js` de cada `inicio`) sirve la carpeta `solucion` en `/solucion/` (`http://localhost:300N/solucion/`).
 
+En el reto 2, el plugin `retos/asistente/plugin.js` añade a las dos pestañas un chat con `gpt-6-luna` que usa las herramientas WebMCP de la página (`getTools()` + `executeTool()`). Va por el proxy de OpenAI del taller con el token de `retos/config.js` (o, si está vacío, el `WORKSHOP_TOKEN` de `.dev.vars`).
+
 Cada reto tiene su puerto, `300N` (N es el número del reto), y cada demo del directo el suyo a partir del `3101` (`directo/liga/1-mcp` → 3101, `directo/liga/2-mcp-ui` → 3102). Nunca coinciden, así que puedes tenerlos todos arrancados a la vez. Si añades uno nuevo, sigue el esquema.
