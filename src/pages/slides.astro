@@ -3,10 +3,12 @@ import { Font } from 'astro:assets';
 import { Code } from 'astro:components';
 import Slide from '../components/Slide.astro';
 import { schedule } from '../data/agenda';
+import { TOKEN_DEL_TALLER } from '../data/taller';
 import '../styles/global.css';
 import '../styles/slides.css';
 
 const theme = 'css-variables';
+const tokenSlide = TOKEN_DEL_TALLER || 'Falta WORKSHOP_TOKEN en .dev.vars';
 const B1 = 'Bloque 1 · MCP UI';
 const B2 = 'Bloque 2 · WebMCP';
 const B3 = 'Bloque 3 · Jev';
@@ -264,6 +266,12 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
           <li><span class="n">3</span><div><h3>Apunta el token</h3><p>Una sola clave para Jev y OpenAI. Caduca al terminar.</p></div></li>
           <li><span class="n">4</span><div><h3>Comprueba</h3><p>Chrome actualizado · Node.js 22+ · <code>node -v</code></p></div></li>
         </ol>
+      </Slide>
+
+      <Slide kind="statement" label="Token del taller">
+        <p class="big token" style={`--chars: ${tokenSlide.length}`}>{tokenSlide}</p>
+        <p class="sub">Una sola clave para Jev y OpenAI. Pégala en el <code>src/config.js</code> de cada reto.</p>
+        <p class="sub">También la tienes en la web del taller, en <span class="accent">/apis</span>.</p>
       </Slide>
 
       <!-- ─────────────── Bloque 1 · MCP UI ─────────────── -->
