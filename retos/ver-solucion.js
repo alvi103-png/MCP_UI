@@ -3,6 +3,7 @@
 // y pone encima de las dos páginas una barra para pasar de tu código a la solución.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { normalizePath } from 'vite';
 
 const ESTILOS = `
 .reto-pestanas {
@@ -43,9 +44,21 @@ const ESTILOS = `
 }
 `;
 
+// En el ordenador del ponente no hace falta pegar el token: si retos/config.js no lo tiene,
+// se usa el WORKSHOP_TOKEN de .dev.vars (igual que el probador). Los asistentes no tienen ese archivo.
+async function tokenDelPonente(raiz) {
+  try {
+    const variables = await readFile(path.join(raiz, '.dev.vars'), 'utf8');
+    return variables.match(/^WORKSHOP_TOKEN\s*=\s*["']?([^"'\s]+)/m)?.[1] ?? '';
+  } catch {
+    return '';
+  }
+}
+
 export function verSolucion() {
   let reto; // retos/<reto>
   let solucion; // ruta absoluta de ../solucion
+  let configuracion; // ruta absoluta de retos/config.js
 
   return {
     name: 'ver-solucion',
@@ -54,6 +67,16 @@ export function verSolucion() {
     configResolved(config) {
       solucion = path.resolve(config.root, '../solucion');
       reto = path.basename(path.dirname(solucion));
+      configuracion = normalizePath(path.resolve(config.root, '../../config.js'));
+    },
+
+    async transform(code, id) {
+      if (normalizePath(id.split('?')[0]) !== configuracion) return;
+      const vacio = /export const TOKEN = (['"`])\1;/;
+      if (!vacio.test(code)) return;
+
+      const token = await tokenDelPonente(path.resolve(configuracion, '../..'));
+      if (token) return code.replace(vacio, `export const TOKEN = ${JSON.stringify(token)};`);
     },
 
     configureServer(server) {
