@@ -101,7 +101,7 @@ export const agenda: AgendaItem[] = [
   {
     minutes: 10,
     kind: 'cierre',
-    title: 'Preguntas y feedback',
+    title: 'Preguntas',
     description: 'Dudas finales, recursos para seguir y encuesta de valoración.',
   },
 ];
