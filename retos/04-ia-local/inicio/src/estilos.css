@@ -1,0 +1,366 @@
+:root {
+  --fondo: #0a0a0a;
+  --superficie: #111;
+  --linea: #262626;
+  --texto: #ededed;
+  --suave: #8f8f8f;
+  --acento: #ff3b30;
+  color-scheme: dark;
+  font-family: ui-monospace, 'Geist Mono', SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--texto);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--linea);
+  border-radius: 4px;
+  background: var(--superficie);
+}
+
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+}
+
+label span {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--suave);
+}
+
+small {
+  color: var(--acento);
+}
+
+.cabecera,
+main {
+  width: min(100% - 2.5rem, 1180px);
+  margin-inline: auto;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.5rem;
+}
+
+.marca {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+}
+
+.marca span {
+  color: var(--acento);
+}
+
+.agente {
+  font-size: 0.8rem;
+  color: var(--suave);
+}
+
+.agente::before {
+  content: '● ';
+  color: var(--acento);
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 2.5rem;
+  align-items: start;
+  padding-bottom: 4rem;
+}
+
+@media (max-width: 860px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filtros {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.inteligente {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 0.75rem;
+}
+
+.estado {
+  min-height: 1.5rem;
+  margin-block: 1rem 0.5rem;
+  font-size: 0.85rem;
+  color: var(--suave);
+}
+
+.productos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 1px;
+  background: var(--linea);
+  border: 1px solid var(--linea);
+}
+
+.producto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  background: var(--fondo);
+}
+
+.producto .emoji {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.producto h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.producto .descripcion {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--suave);
+}
+
+.producto .encaje {
+  font-size: 0.8rem;
+  color: var(--acento);
+}
+
+.producto .pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.producto .acciones {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.producto .acciones button {
+  flex: 1;
+  padding-inline: 0.5rem;
+}
+
+.principal {
+  border-color: var(--texto);
+  background: var(--texto);
+  color: var(--fondo);
+}
+
+.principal:hover:not(:disabled) {
+  border-color: var(--acento);
+  background: var(--acento);
+  color: #fff;
+}
+
+.carrito {
+  position: sticky;
+  top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--linea);
+}
+
+.carrito h2 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+#lineas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+#lineas li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding-block: 0.4rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+#lineas .vacio {
+  display: block;
+  color: var(--suave);
+}
+
+#lineas button {
+  padding: 0 0.4rem;
+  border: 0;
+  color: var(--suave);
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  margin-block: 0.9rem;
+}
+
+#vaciar {
+  width: 100%;
+}
+
+.ofertas {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--linea);
+}
+
+.ofertas h2,
+.ofertas .estado {
+  margin: 0;
+}
+
+/* WebMCP: resalta el formulario mientras lo está usando un agente */
+form:tool-form-active {
+  outline: 2px dashed var(--acento);
+  outline-offset: 6px;
+}
+
+.detalle {
+  width: min(100% - 2rem, 640px);
+  max-height: 85vh;
+  padding: 2rem;
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+.detalle::backdrop {
+  background: rgb(0 0 0 / 0.7);
+}
+
+.cerrar {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  border: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.detalle h2 {
+  font-size: 1.4rem;
+  margin-block: 0.5rem;
+}
+
+.detalle h3 {
+  font-size: 0.8rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--suave);
+  margin-block: 1.75rem 0.75rem;
+}
+
+.detalle .suave {
+  color: var(--suave);
+}
+
+.resumen {
+  margin-top: 0.75rem;
+  padding: 1rem;
+  border-left: 2px solid var(--acento);
+  background: var(--superficie);
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.resumen:empty {
+  display: none;
+}
+
+.reseñas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.reseñas li {
+  padding-block: 0.6rem;
+  border-bottom: 1px solid var(--linea);
+}
+
+.reseñas .autor {
+  color: var(--suave);
+  font-size: 0.8rem;
+}
+
+.nueva-reseña {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.nueva-reseña button {
+  justify-self: start;
+}
