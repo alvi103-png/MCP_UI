@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { crearVista } from './lib/vista.js';
 import { categorias } from './productos.js';
 import { añadirAlCarrito, buscarProductos, verCarrito } from './tienda.js';
+import { servirProbador } from '../../../probador/servir.js';
 
 // Dirección de la vista. El esquema ui:// indica que es una interfaz de MCP Apps
 const VISTA_CATALOGO = 'ui://tienda/catalogo.html';
@@ -126,8 +127,11 @@ if (process.argv.includes('--stdio')) {
   createServer(async (req, res) => {
     if (!hostValido(req, res) || !origenValido(req, res)) return;
 
-    if (new URL(req.url, 'http://localhost').pathname !== '/mcp') {
-      res.writeHead(404).end('El servidor MCP está en /mcp');
+    const { pathname } = new URL(req.url, 'http://localhost');
+
+    // Fuera de /mcp, una web para probar el servidor desde el navegador
+    if (pathname !== '/mcp') {
+      await servirProbador(pathname, res);
       return;
     }
 
@@ -137,5 +141,6 @@ if (process.argv.includes('--stdio')) {
     await transporte.handleRequest(req, res);
   }).listen(PUERTO, '127.0.0.1', () => {
     console.log(`Servidor MCP de la tienda en http://localhost:${PUERTO}/mcp`);
+    console.log(`Probador en http://localhost:${PUERTO}`);
   });
 }

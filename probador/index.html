@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Probador MCP</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fuentes/mono.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fuentes/pixel.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/probador.css" />
+    <script type="module" src="/probador.js"></script>
+  </head>
+  <body>
+    <header>
+      <span class="marca">mwc<span class="accent">/</span>taller</span>
+      <code id="endpoint" class="muted"></code>
+    </header>
+
+    <main>
+      <h1 id="servidor">MCP</h1>
+      <p id="estado" class="muted" role="status">Conectando…</p>
+      <ul id="herramientas"></ul>
+    </main>
+  </body>
+</html>

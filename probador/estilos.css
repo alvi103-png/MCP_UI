@@ -1,0 +1,277 @@
+/* El estilo de la web del taller (src/styles/global.css) */
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fuentes/mono.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Pixel';
+  src: url('/fuentes/pixel.woff2') format('woff2');
+  font-weight: 400 500;
+  font-display: swap;
+}
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --line: #262626;
+  --fg: #ededed;
+  --muted: #8f8f8f;
+  --accent: #ff3b30;
+  --ok: #3fdc6f;
+  --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --pixel: 'Geist Pixel', var(--mono);
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+}
+
+header,
+main {
+  width: min(100% - 3rem, 860px);
+  margin-inline: auto;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding-block: 1.75rem;
+  font-size: 0.87rem;
+}
+
+.marca {
+  font-family: var(--pixel);
+  font-size: 1.15rem;
+}
+
+main {
+  padding-block: 2rem 5rem;
+}
+
+h1 {
+  font-family: var(--pixel);
+  font-weight: 500;
+  font-size: clamp(2.5rem, 8vw, 4rem);
+  line-height: 1;
+  margin: 0 0 0.75rem;
+}
+
+h1 small {
+  font-size: 0.3em;
+  color: var(--muted);
+}
+
+p {
+  margin: 0;
+}
+
+code,
+pre,
+input,
+select,
+button {
+  font-family: var(--mono);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ───────────── Herramientas ───────────── */
+
+#herramientas {
+  list-style: none;
+  margin: 2.5rem 0 0;
+  padding: 0;
+}
+
+.herramienta {
+  border-top: 1px solid var(--line);
+  padding-block: 1rem;
+}
+
+.herramienta:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.herramienta form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.nombre {
+  flex: 1 1 12rem;
+  align-self: center;
+}
+
+.descripcion {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+}
+
+label {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+input,
+select {
+  width: 9rem;
+  font-size: 0.82rem;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--muted);
+  outline: none;
+}
+
+button {
+  font-size: 0.82rem;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+button:disabled {
+  cursor: progress;
+  color: var(--muted);
+  border-color: var(--line);
+}
+
+/* ───────────── Resultado ───────────── */
+
+.resultado {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.85rem;
+}
+
+.meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.82rem;
+}
+
+.ok {
+  color: var(--ok);
+}
+
+.error {
+  color: var(--accent);
+}
+
+pre {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  max-height: 24rem;
+  overflow: auto;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+details summary:hover {
+  color: var(--fg);
+}
+
+details pre {
+  margin-top: 0.4rem;
+}
+
+iframe {
+  display: block;
+  width: 100%;
+  height: 160px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+/* Lo que la vista le manda al cliente: llamadas, contexto, mensajes… */
+.eventos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.78rem;
+}
+
+.eventos li {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.eventos code {
+  color: var(--accent);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
