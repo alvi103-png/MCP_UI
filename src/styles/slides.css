@@ -594,6 +594,7 @@ pre + .list {
   text-align: left;
   padding: 20px 32px 20px 0;
   border-bottom: 2px solid var(--line);
+  text-wrap: balance;
 }
 
 .slide th {
@@ -604,6 +605,12 @@ pre + .list {
 
 .slide td:first-child {
   color: var(--muted);
+}
+
+/* Todas las filas con el alto de dos líneas, aunque el texto quepa en una */
+.two-lines td {
+  box-sizing: content-box;
+  height: 2lh;
 }
 
 .when td {
