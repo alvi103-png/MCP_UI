@@ -1,0 +1,128 @@
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --line: #262626;
+  --fg: #ededed;
+  --muted: #8f8f8f;
+  --accent: #ff3b30;
+  /* @font-face, preload y fallbacks los genera <Font /> (ver fonts en astro.config.mjs) */
+  --pixel: var(--font-pixel);
+  --mono: var(--font-mono);
+  color-scheme: dark;
+
+  /* Syntax highlighting: tokens de Geist (Vercel) con más saturación, tema css-variables de Shiki */
+  --astro-code-foreground: #ededed; /* gray-1000 */
+  --astro-code-background: var(--surface);
+  --astro-code-token-comment: #a1a1a1; /* gray-900 */
+  --astro-code-token-keyword: #ff3d7f; /* pink-900 avivado */
+  --astro-code-token-function: #c26bff; /* purple-900 avivado */
+  --astro-code-token-constant: #3b9bff; /* blue-900 avivado */
+  --astro-code-token-parameter: #ffb000; /* amber-900 avivado */
+  --astro-code-token-string: #3fdc6f; /* green-900 avivado */
+  --astro-code-token-string-expression: #3fdc6f;
+  --astro-code-token-link: #3fdc6f;
+  --astro-code-token-punctuation: #ededed;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--pixel);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 0.25em;
+}
+
+a:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.95em;
+}
+
+:not(pre) > code {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  background: var(--surface);
+}
+
+pre {
+  margin: 0;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface) !important;
+  overflow-x: auto;
+  font-size: 0.87rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.label {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

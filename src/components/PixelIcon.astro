@@ -1,0 +1,48 @@
+---
+import { icons, type IconName } from './pixel-icons';
+
+interface Props {
+  name: IconName;
+  size?: number;
+}
+
+const { name, size = 48 } = Astro.props;
+const pixels = icons[name];
+
+const colors: Record<string, string> = {
+  '#': 'currentColor',
+  '+': 'var(--accent)',
+  '-': 'var(--muted)',
+};
+
+// Agrupa píxeles contiguos del mismo color en un único rect
+const rects: { x: number; y: number; w: number; fill: string }[] = [];
+pixels.forEach((row, y) => {
+  let x = 0;
+  while (x < row.length) {
+    const char = row[x];
+    let end = x;
+    while (row[end + 1] === char) end++;
+    if (colors[char]) rects.push({ x, y, w: end - x + 1, fill: colors[char] });
+    x = end + 1;
+  }
+});
+---
+
+<svg
+  class="pixel-icon"
+  width={size}
+  height={size}
+  viewBox="0 0 16 16"
+  shape-rendering="crispEdges"
+  aria-hidden="true"
+>
+  {rects.map((r) => <rect x={r.x} y={r.y} width={r.w} height="1" fill={r.fill} />)}
+</svg>
+
+<style>
+  .pixel-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+</style>
