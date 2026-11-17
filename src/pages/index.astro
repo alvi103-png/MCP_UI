@@ -1,0 +1,310 @@
+---
+import Agenda from '../components/Agenda.astro';
+import PixelIcon from '../components/PixelIcon.astro';
+import type { IconName } from '../components/pixel-icons';
+import Base from '../layouts/Base.astro';
+
+const bloques: { n: number; title: string; text: string; href: string; icon: IconName }[] = [
+  {
+    n: 1,
+    title: 'MCP UI',
+    text: 'Interfaces interactivas dentro del chat.',
+    href: '/retos/01-mcp-ui',
+    icon: 'mcp-ui',
+  },
+  {
+    n: 2,
+    title: 'WebMCP',
+    text: 'Tu web, como herramientas para agentes.',
+    href: '/retos/02-webmcp',
+    icon: 'webmcp',
+  },
+  {
+    n: 3,
+    title: 'Jev',
+    text: 'Decisiones rápidas y tipadas para tu código.',
+    href: '/retos/03-jev',
+    icon: 'jev',
+  },
+  {
+    n: 4,
+    title: 'IA local',
+    text: 'Modelos en el navegador, sin servidor.',
+    href: '/retos/04-ia-local',
+    icon: 'ia-local',
+  },
+];
+
+const instalar = [
+  {
+    title: 'Node.js',
+    text: 'La versión 22 o superior. Si no sabes cuál elegir, descarga la LTS.',
+    links: [{ label: 'nodejs.org', href: 'https://nodejs.org/es/download' }],
+    check: 'node -v',
+  },
+  {
+    title: 'Visual Studio Code',
+    text: 'El editor que usaremos en el taller. Si ya tienes otro con el que estés a gusto, también vale.',
+    links: [{ label: 'code.visualstudio.com', href: 'https://code.visualstudio.com/' }],
+  },
+  {
+    title: 'Google Chrome',
+    text: 'Actualizado a la última versión: lo necesitamos para WebMCP y para la IA integrada en el navegador.',
+    links: [{ label: 'google.com/chrome', href: 'https://www.google.com/chrome/' }],
+  },
+  {
+    title: 'Git',
+    text: 'Para descargar el repositorio con los retos. En macOS puede que ya lo tengas.',
+    links: [{ label: 'git-scm.com', href: 'https://git-scm.com/downloads' }],
+    check: 'git --version',
+  },
+  {
+    title: 'Un agente de código',
+    optional: true,
+    text: 'No es imprescindible, pero ayuda. Durante el taller se facilita un token para las APIs.',
+    links: [
+      { label: 'Claude Code', href: 'https://claude.com/product/claude-code' },
+      { label: 'Codex', href: 'https://openai.com/codex/' },
+      { label: 'Cursor', href: 'https://cursor.com/' },
+    ],
+  },
+];
+---
+
+<Base>
+  <section class="hero">
+    <p class="label">Upskilling Week Barcelona · 15:00 – 18:00</p>
+    <h1>Webs listas<br />con la <span class="accent">IA</span></h1>
+    <div class="cta">
+      <a class="button primary" href="/retos">Empezar los retos</a>
+      <a class="button" href="/apis">APIs del taller</a>
+      <a class="button" href="/slides">Slides</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cuatro bloques</h2>
+    <ul class="bloques">
+      {
+        bloques.map((bloque) => (
+          <li>
+            <a href={bloque.href}>
+              <div class="top">
+                <span class="n">0{bloque.n}</span>
+                <PixelIcon name={bloque.icon} />
+              </div>
+              <h3>{bloque.title}</h3>
+              <p class="muted">{bloque.text}</p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Agenda</h2>
+      <a href="/agenda">Ver el detalle →</a>
+    </div>
+    <Agenda />
+  </section>
+
+  <section>
+    <h2>Qué instalar</h2>
+    <p class="muted intro">Trae tu portátil (recomendado: 16 GB de RAM) con esto listo:</p>
+    <ol class="pasos">
+      {
+        instalar.map((paso, i) => (
+          <li>
+            <span class="n">0{i + 1}</span>
+            <div>
+              <h3>
+                {paso.title}
+                {paso.optional && <span class="tag">Opcional</span>}
+              </h3>
+              <p class="muted">{paso.text}</p>
+              <p class="links">
+                {paso.links.map((link) => (
+                  <a href={link.href} target="_blank" rel="noopener noreferrer">
+                    {link.label} ↗
+                  </a>
+                ))}
+                {paso.check && (
+                  <span class="check">
+                    Comprueba: <code>{paso.check}</code>
+                  </span>
+                )}
+              </p>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</Base>
+
+<style>
+  section {
+    margin-bottom: 5rem;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 11vw, 6.5rem);
+    line-height: 0.98;
+    margin-block: 1rem 2rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2.25rem;
+  }
+
+  .button {
+    padding: 0.6rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .button:hover {
+    border-color: var(--fg);
+    color: var(--fg);
+  }
+
+  .button.primary {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--bg);
+  }
+
+  .button.primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 0.87rem;
+  }
+
+  .bloques {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .bloques a {
+    display: block;
+    height: 100%;
+    padding: 1.5rem;
+    background: var(--bg);
+    text-decoration: none;
+  }
+
+  .bloques a:hover {
+    background: var(--surface);
+    color: var(--fg);
+  }
+
+  .bloques a:hover h3 {
+    color: var(--accent);
+  }
+
+  .bloques .top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .bloques .n {
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+
+  .bloques h3 {
+    font-size: 1.6rem;
+    margin-block: 0.5rem 0.6rem;
+  }
+
+  .bloques p {
+    font-size: 0.9rem;
+  }
+
+  .intro {
+    margin-bottom: 1.5rem;
+  }
+
+  .pasos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .pasos li {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+    padding-block: 1.25rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .pasos .n {
+    font-size: 0.8rem;
+    color: var(--accent);
+    padding-top: 0.35rem;
+  }
+
+  .pasos h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .pasos .tag {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.1em 0.5em;
+  }
+
+  .pasos p {
+    font-size: 0.9rem;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1.25rem;
+    margin-top: 0.6rem;
+  }
+
+  .check {
+    color: var(--muted);
+  }
+</style>

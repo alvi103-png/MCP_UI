@@ -1,0 +1,115 @@
+---
+import { schedule } from '../data/agenda';
+
+interface Props {
+  /** Muestra el desglose de cada bloque */
+  detailed?: boolean;
+}
+
+const { detailed = false } = Astro.props;
+---
+
+<ol class="agenda">
+  {
+    schedule.map((item) => (
+      <li class:list={['item', item.kind]}>
+        <div class="time">
+          <span>{item.start}</span>
+          <span class="muted">{item.minutes} min</span>
+        </div>
+        <div class="body">
+          <h3>
+            {item.block && <span class="accent">Bloque {item.block} · </span>}
+            {item.title}
+          </h3>
+          <p class="muted">{item.description}</p>
+          {detailed && item.steps && (
+            <ul class="steps">
+              {item.steps.map((step) => (
+                <li>
+                  <span class="muted">{step.minutes}′</span>
+                  {step.text}
+                </li>
+              ))}
+            </ul>
+          )}
+          {detailed && item.reto && (
+            <a class="reto" href={`/retos/${item.reto}`}>
+              Ver el reto →
+            </a>
+          )}
+        </div>
+      </li>
+    ))
+  }
+  <li class="item end">
+    <div class="time"><span>18:00</span></div>
+    <div class="body"><h3 class="muted">Fin</h3></div>
+  </li>
+</ol>
+
+<style>
+  .agenda {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 5.5rem 1fr;
+    gap: 1.5rem;
+    padding-block: 1.25rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .time {
+    display: flex;
+    flex-direction: column;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .time span:first-child {
+    font-family: var(--pixel);
+    font-size: 1.25rem;
+    line-height: 1.3;
+  }
+
+  .time .muted {
+    font-size: 0.8rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    margin-bottom: 0.35rem;
+  }
+
+  .descanso h3,
+  .descanso .time span:first-child {
+    color: var(--muted);
+  }
+
+  .steps {
+    list-style: none;
+    margin: 0.9rem 0 0;
+    padding: 0;
+    font-size: 0.9rem;
+  }
+
+  .steps li {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    padding-block: 0.15rem;
+  }
+
+  .reto {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-size: 0.87rem;
+  }
+
+  .end {
+    padding-bottom: 0;
+  }
+</style>

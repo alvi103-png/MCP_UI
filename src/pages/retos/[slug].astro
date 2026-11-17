@@ -1,0 +1,120 @@
+---
+import { retos } from '../../data/retos';
+import Base from '../../layouts/Base.astro';
+import '../../styles/flujo.css';
+
+export function getStaticPaths() {
+  return retos.map((reto, index) => ({
+    params: { slug: reto.slug },
+    props: { reto, prev: retos[index - 1], next: retos[index + 1] },
+  }));
+}
+
+const { reto, prev, next } = Astro.props;
+const { Content } = reto;
+---
+
+<Base title={`Reto ${reto.bloque}: ${reto.title}`} description={reto.resumen}>
+  <p class="label">
+    <a href="/retos">Retos</a> / Bloque {reto.bloque} · {reto.minutos} min ·
+    <code>retos/{reto.slug}</code>
+  </p>
+  <h1>{reto.title}</h1>
+  <p class="resumen muted">{reto.resumen}</p>
+
+  <article class="prose">
+    <Content />
+  </article>
+
+  <nav class="pager" aria-label="Otros retos">
+    {prev ? <a href={`/retos/${prev.slug}`}>← {prev.title}</a> : <span />}
+    {next ? <a href={`/retos/${next.slug}`}>{next.title} →</a> : <a href="/slides">Slides →</a>}
+  </nav>
+</Base>
+
+<style>
+  h1 {
+    font-size: clamp(2.25rem, 7vw, 3.75rem);
+    margin-block: 0.6rem 1rem;
+  }
+
+  .resumen {
+    max-width: 60ch;
+    font-size: 1.05rem;
+    margin-bottom: 3rem;
+  }
+
+  .prose :global(h2) {
+    font-size: 1.7rem;
+    margin-block: 3rem 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .prose :global(h3) {
+    font-size: 1.2rem;
+    margin-block: 2rem 0.75rem;
+  }
+
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol),
+  .prose :global(pre),
+  .prose :global(blockquote),
+  .prose :global(table) {
+    margin-block: 0 1.1rem;
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    padding-left: 1.5rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.35rem;
+  }
+
+  .prose :global(li::marker) {
+    color: var(--accent);
+  }
+
+  .prose :global(blockquote) {
+    margin-inline: 0;
+    padding: 0.1rem 0 0.1rem 1.1rem;
+    border-left: 2px solid var(--accent);
+    color: var(--muted);
+  }
+
+  .prose :global(blockquote p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    text-align: left;
+    padding: 0.5rem 0.75rem 0.5rem 0;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  .prose :global(th) {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+</style>
