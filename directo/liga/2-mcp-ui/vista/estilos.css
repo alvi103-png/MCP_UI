@@ -1,0 +1,462 @@
+/* Si el cliente comparte sus variables (--color-*, --font-*…), las usamos; si no, los valores por defecto */
+:root {
+  color-scheme: light dark;
+  --fondo: var(--color-background-primary, light-dark(#ffffff, #141518));
+  --fondo-suave: var(--color-background-secondary, light-dark(#f3f4f6, #1e2024));
+  --texto: var(--color-text-primary, light-dark(#111318, #f1f2f4));
+  --texto-suave: var(--color-text-secondary, light-dark(#5f6470, #9da3ae));
+  --linea: var(--color-border-tertiary, light-dark(#e6e7ea, #2a2d33));
+  --radio: var(--border-radius-md, 8px);
+
+  --acento: light-dark(#e0352b, #ff5a4e);
+  --champions: #2f6bff;
+  --europa: #f08c00;
+  --conference: #12a150;
+  --descenso: #e5484d;
+  --ganado: #12a150;
+  --empatado: light-dark(#9097a3, #6b7280);
+  --perdido: #e5484d;
+
+  font-family: var(--font-sans, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 16px;
+  color: var(--texto);
+  background: var(--fondo);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin: 20px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-suave);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────── Cabecera y pestañas ───────────── */
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.antetitulo {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acento);
+}
+
+nav {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--fondo-suave);
+}
+
+nav button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+nav button:hover {
+  color: var(--texto);
+}
+
+nav button[aria-current] {
+  background: var(--fondo);
+  color: var(--texto);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
+}
+
+main {
+  transition: opacity 0.15s;
+}
+
+main[aria-busy='true'] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.estado {
+  margin: 24px 0;
+  text-align: center;
+  color: var(--texto-suave);
+}
+
+.estado.error {
+  color: var(--perdido);
+}
+
+/* ───────────── Escudo y botón de equipo ───────────── */
+
+.escudo {
+  flex: none;
+  display: inline-block;
+  object-fit: contain;
+}
+
+.equipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+}
+
+.equipo .nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipo:hover .nombre {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ───────────── Clasificación ───────────── */
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th {
+  padding: 0 6px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texto-suave);
+  text-align: left;
+}
+
+.tabla td {
+  padding: 7px 6px;
+  border-top: 1px solid var(--linea);
+  vertical-align: middle;
+}
+
+.tabla .equipo {
+  display: flex;
+}
+
+.tabla th.num,
+.tabla td.num {
+  text-align: right;
+}
+
+.tabla td:nth-child(2) {
+  width: 100%;
+  max-width: 0;
+}
+
+.tabla .posicion {
+  width: 2.5em;
+  color: var(--texto-suave);
+}
+
+.tabla .puntos {
+  font-weight: 700;
+}
+
+.tabla tr:hover td {
+  background: var(--fondo-suave);
+}
+
+/* La franja de color a la izquierda indica la zona de la tabla */
+[data-zona='Champions'] {
+  --zona: var(--champions);
+}
+[data-zona='Europa League'] {
+  --zona: var(--europa);
+}
+[data-zona='Conference League'] {
+  --zona: var(--conference);
+}
+[data-zona='Descenso'] {
+  --zona: var(--descenso);
+}
+
+.tabla tr[data-zona] .posicion {
+  box-shadow: inset 3px 0 var(--zona, transparent);
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.leyenda li::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--zona);
+}
+
+/* ───────────── Partidos ───────────── */
+
+.partidos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+}
+
+.partido {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.partido + .partido {
+  border-top: 1px solid var(--linea);
+}
+
+.lado {
+  display: flex;
+  min-width: 0;
+}
+
+.lado.local {
+  justify-content: flex-end;
+}
+
+.lado.local .equipo {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.lado.gana {
+  font-weight: 700;
+}
+
+.lado.pierde {
+  color: var(--texto-suave);
+}
+
+.marcador {
+  display: inline-flex;
+  justify-content: center;
+  gap: 6px;
+  min-width: 64px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--fondo-suave);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.partido[data-estado='pre'] .marcador {
+  font-weight: 500;
+  color: var(--texto-suave);
+}
+
+.partido[data-estado='in'] .marcador {
+  background: var(--acento);
+  color: #fff;
+}
+
+.en-juego {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  translate: -50% 0;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--acento);
+}
+
+.dia h2 {
+  margin-top: 16px;
+}
+
+.dia:first-of-type h2 {
+  margin-top: 0;
+}
+
+/* ───────────── Ficha de equipo ───────────── */
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.cabecera > div {
+  flex: 1;
+  min-width: 160px;
+}
+
+.cabecera h1 {
+  margin: 0 0 2px;
+  font-size: 22px;
+}
+
+.resumen {
+  margin: 0;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen strong {
+  color: var(--texto);
+}
+
+.racha {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.racha li {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.racha [data-resultado='G'] {
+  background: var(--ganado);
+}
+.racha [data-resultado='E'] {
+  background: var(--empatado);
+}
+.racha [data-resultado='P'] {
+  background: var(--perdido);
+}
+
+.proximo {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radio);
+  background: var(--fondo-suave);
+}
+
+.proximo .partidos {
+  border: 0;
+}
+
+.proximo .partido {
+  padding: 4px 0;
+}
+
+.proximo .marcador {
+  background: var(--fondo);
+}
+
+.detalle {
+  margin: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.detalle::first-letter {
+  text-transform: uppercase;
+}
+
+.preguntar {
+  justify-self: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--acento);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.preguntar:hover {
+  filter: brightness(1.08);
+}
+
+/* ───────────── Pantallas estrechas ───────────── */
+
+@media (max-width: 440px) {
+  body {
+    padding: 12px;
+  }
+
+  .opcional {
+    display: none;
+  }
+
+  .partido {
+    gap: 8px;
+    padding: 10px 8px;
+  }
+
+  .marcador {
+    min-width: 52px;
+  }
+}
