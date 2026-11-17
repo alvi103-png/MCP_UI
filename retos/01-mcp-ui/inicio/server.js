@@ -16,7 +16,7 @@ import { servirProbador } from '../../../probador/servir.js';
 // Dirección de la vista. El esquema ui:// indica que es una interfaz de MCP Apps
 const VISTA_CATALOGO = 'ui://tienda/catalogo.html';
 
-function crearServidor() {
+export function crearServidor() {
   const server = new McpServer({ name: 'tienda', version: '1.0.0' });
 
   // Esta herramienta ya funciona, pero solo devuelve texto.
@@ -90,10 +90,11 @@ function crearServidor() {
   return server;
 }
 
-if (process.argv.includes('--stdio')) {
+// Arranca solo si ejecutas este archivo: la pestaña «Ver solución» importa el de ../solucion sin arrancarlo
+if (import.meta.main && process.argv.includes('--stdio')) {
   // Para clientes que arrancan el servidor como proceso (Claude Desktop, por ejemplo)
   await crearServidor().connect(new StdioServerTransport());
-} else {
+} else if (import.meta.main) {
   // Servidor HTTP en http://localhost:3001/mcp
   const PUERTO = Number(process.env.PORT ?? 3001);
   const hostValido = localhostHostValidation();
@@ -105,17 +106,19 @@ if (process.argv.includes('--stdio')) {
     const { pathname } = new URL(req.url, 'http://localhost');
 
     // Fuera de /mcp, una web para probar el servidor desde el navegador
-    if (pathname !== '/mcp') {
+    if (pathname !== '/mcp' && pathname !== '/solucion/mcp') {
       await servirProbador(pathname, res);
       return;
     }
 
     // Sin sesiones: un servidor y un transporte por petición
     const transporte = new NodeStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-    await crearServidor().connect(transporte);
+    // /solucion/mcp es el servidor de la carpeta solucion: lo usa la pestaña «Ver solución» del probador
+    const servidor = pathname === '/mcp' ? crearServidor() : (await import('../solucion/server.js')).crearServidor();
+    await servidor.connect(transporte);
     await transporte.handleRequest(req, res);
   }).listen(PUERTO, '127.0.0.1', () => {
     console.log(`Servidor MCP de la tienda en http://localhost:${PUERTO}/mcp`);
-    console.log(`Probador en http://localhost:${PUERTO}`);
+    console.log(`Probador en http://localhost:${PUERTO} (y la solución en http://localhost:${PUERTO}/solucion/)`);
   });
 }

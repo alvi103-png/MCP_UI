@@ -46,6 +46,7 @@ body {
 }
 
 header,
+.pestanas,
 main {
   width: min(100% - 3rem, 860px);
   margin-inline: auto;
@@ -68,6 +69,43 @@ header {
 
 main {
   padding-block: 2rem 5rem;
+}
+
+/* ───────────── Pestañas «Tu código» y «Ver solución» ───────────── */
+
+.pestanas {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.82rem;
+}
+
+.pestanas[hidden] {
+  display: none;
+}
+
+.pestanas a {
+  margin-bottom: -1px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.pestanas a:hover {
+  color: var(--fg);
+}
+
+.pestanas a[aria-current='page'] {
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.pestanas a[href^='/solucion'][aria-current='page'] {
+  border-top: 2px solid var(--accent);
 }
 
 h1 {
@@ -113,11 +151,135 @@ button {
   color: #fff;
 }
 
+h2 {
+  font-family: var(--pixel);
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h2 .muted {
+  font-family: var(--mono);
+  font-size: 0.6em;
+}
+
+section {
+  margin-top: 3rem;
+}
+
+/* ───────────── Chat ───────────── */
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+#disponibles {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+}
+
+#disponibles code {
+  color: var(--fg);
+}
+
+#mensajes {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+#mensajes:empty {
+  display: none;
+}
+
+.usuario {
+  justify-self: end;
+  max-width: 80%;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+/* La respuesta del modelo, en markdown */
+.asistente > * {
+  margin: 0;
+}
+
+.asistente > * + * {
+  margin-top: 0.6rem;
+}
+
+.asistente :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+
+.asistente table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.asistente :is(th, td) {
+  padding: 0.25rem 0.75rem 0.25rem 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.asistente th {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.asistente a {
+  color: var(--fg);
+}
+
+/* Cada herramienta que usa el modelo */
+.llamada {
+  display: grid;
+  gap: 0.5rem;
+  padding-left: 0.85rem;
+  border-left: 2px solid var(--line);
+}
+
+.llamada .resultado {
+  margin-top: 0;
+}
+
+#pensando {
+  margin-top: 1rem;
+  font-size: 0.82rem;
+}
+
+#pregunta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+#pregunta input {
+  flex: 1;
+  width: auto;
+  font-size: 0.9rem;
+  padding: 0.55rem 0.8rem;
+}
+
+#pregunta button {
+  padding-inline: 1rem;
+}
+
 /* ───────────── Herramientas ───────────── */
 
 #herramientas {
   list-style: none;
-  margin: 2.5rem 0 0;
+  margin: 1.25rem 0 0;
   padding: 0;
 }
 
