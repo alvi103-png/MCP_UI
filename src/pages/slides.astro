@@ -878,6 +878,26 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
         show(current + (event.clientX > innerWidth / 2 ? 1 : -1));
       });
 
+      // Al entrar, pantalla completa. El navegador solo la permite tras un gesto del
+      // usuario, así que se pide con la primera tecla o clic hasta que lo consigue
+      const gestures = ['pointerdown', 'keydown'] as const;
+
+      function autoFullscreen(event?: Event) {
+        // La «f» ya alterna la pantalla completa por su cuenta
+        if (event instanceof KeyboardEvent && event.key === 'f') return;
+        if (document.fullscreenElement) return;
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+
+      for (const gesture of gestures) addEventListener(gesture, autoFullscreen);
+      // En cuanto entra (por la vía que sea) deja de insistir: si luego sales con Esc, se respeta
+      addEventListener(
+        'fullscreenchange',
+        () => gestures.forEach((gesture) => removeEventListener(gesture, autoFullscreen)),
+        { once: true },
+      );
+      autoFullscreen();
+
       addEventListener('resize', fit);
       addEventListener('hashchange', () => show(Number(location.hash.slice(1)) - 1 || 0));
 
