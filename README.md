@@ -13,6 +13,20 @@ Este repositorio contiene:
 | `retos/` | Los cuatro retos, cada uno con `inicio/`, `solucion/` y su enunciado (`README.md`) |
 | `directo/` | El código de las partes en directo. `directo/liga`: un MCP con los resultados de LaLiga y, después, con interfaz |
 
+## Instalación
+
+Es un monorepo: cada reto (`retos/*/inicio`, `retos/*/solucion`) y cada parte del directo (`directo/liga/*`) es un workspace. Un solo `install` en la raíz instala las dependencias de todo el proyecto, con el gestor que prefieras:
+
+```bash
+npm install    # o
+pnpm install   # o
+bun install
+```
+
+Hay un lockfile para cada uno (`package-lock.json`, `pnpm-lock.yaml` y `bun.lock`). Si cambias dependencias, actualiza los tres.
+
+También puedes instalar desde la carpeta de un reto: `npm install` instala solo ese reto, y `pnpm install` o `bun install`, todo el monorepo.
+
 ## La web
 
 ```bash
