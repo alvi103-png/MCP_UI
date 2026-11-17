@@ -128,9 +128,9 @@ body {
   margin-bottom: 16px;
 }
 
-/* ── Presentación con avatar en pixel art ── */
+/* ── Texto a la izquierda e ilustración a la derecha ── */
 
-.intro {
+.split {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
@@ -141,6 +141,69 @@ body {
   width: 384px; /* 64px × 6: múltiplo entero para que los píxeles salgan iguales */
   height: 384px;
   image-rendering: pixelated;
+}
+
+/* ── Iconos pixel art ── */
+
+/* Los tamaños son múltiplos de 16 para que cada píxel mida lo mismo */
+
+/* Fila de iconos bajo una frase */
+.icon-row {
+  display: flex;
+  align-items: center;
+  gap: 64px;
+  margin-top: 88px;
+}
+
+/* Parpadeo a saltos: los ojos y la antena del robot, el vapor del café */
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes steam {
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+.blink rect[fill='var(--accent)'] {
+  animation: blink 1.4s steps(1, end) infinite;
+}
+
+.steam rect[fill='var(--muted)'] {
+  animation: steam 1s steps(1, end) infinite;
+}
+
+/* Icono en línea con el texto: tablas, títulos y enlaces */
+.ico {
+  display: inline-flex;
+  align-items: center;
+  gap: 20px;
+  vertical-align: middle;
+}
+
+/* QR del repositorio */
+.qr {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+}
+
+.qr img {
+  width: 406px; /* 29 módulos × 14px */
+  height: 406px;
+  image-rendering: pixelated;
+  border-radius: 12px;
+}
+
+.qr code {
+  border: 0;
+  background: none;
+  font-size: 36px;
+  color: var(--fg);
 }
 
 /* ── Portada de bloque ── */
@@ -229,6 +292,43 @@ body {
   margin-bottom: 20px;
 }
 
+.cards .pixel-icon {
+  margin-bottom: 32px;
+}
+
+/* Número a la izquierda e icono a la derecha */
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.card-top .n,
+.card-top .pixel-icon {
+  margin: 0;
+}
+
+.cards .eg {
+  margin-top: 24px;
+}
+
+.cards .eg code {
+  font-size: 28px;
+  color: var(--fg);
+}
+
+/* Avatar con una burbuja de pregunta encima */
+.asker {
+  position: relative;
+}
+
+.asker .bubble {
+  position: absolute;
+  top: -128px;
+  right: -64px;
+}
+
 .cards p {
   font-size: 32px;
   line-height: 1.35;
@@ -248,6 +348,11 @@ body {
   align-items: baseline;
   padding-block: 22px;
   border-top: 2px solid var(--line);
+}
+
+.steps li:has(> .pixel-icon) {
+  grid-template-columns: 90px 120px 1fr;
+  align-items: center;
 }
 
 .steps .n {
@@ -295,6 +400,18 @@ body {
   margin-bottom: 0.7em;
 }
 
+/* Lista con un icono en lugar de viñeta */
+.icon-list li {
+  display: flex;
+  align-items: center;
+  gap: 44px;
+  padding-left: 0;
+}
+
+.icon-list li::before {
+  content: none;
+}
+
 pre + .list {
   margin-top: 48px;
   font-size: 34px;
@@ -322,7 +439,8 @@ pre + .list {
 
 .agenda li {
   display: grid;
-  grid-template-columns: 190px 1fr auto;
+  grid-template-columns: 88px 190px 1fr auto;
+  align-items: center;
   padding-block: 15px;
   border-top: 2px solid var(--line);
 }
@@ -357,6 +475,22 @@ pre + .list {
   border-color: var(--accent);
 }
 
+.box > .pixel-icon {
+  margin-bottom: 32px;
+}
+
+/* Cliente ⇄ servidor ⇄ datos */
+.flow.chain {
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: stretch;
+  gap: 40px;
+}
+
+.flow.chain .arrow {
+  align-content: center;
+  gap: 16px;
+}
+
 .box p {
   font-size: 32px;
   margin-top: 12px;
@@ -385,6 +519,11 @@ pre + .list {
 
 .cols h3 {
   margin-bottom: 28px;
+}
+
+.cols h3.ico {
+  display: flex;
+  gap: 24px;
 }
 
 .cols .box p + p {
@@ -433,6 +572,10 @@ pre + .list {
   white-space: nowrap;
 }
 
+.when .ico {
+  gap: 24px;
+}
+
 /* ── Enlaces ── */
 
 .links {
@@ -446,6 +589,10 @@ pre + .list {
   grid-template-columns: 480px 1fr;
   padding-block: 20px;
   border-top: 2px solid var(--line);
+}
+
+.links li > .ico {
+  gap: 28px;
 }
 
 .links code {
@@ -595,9 +742,26 @@ pre + .list {
 .slide.active .flow ~ .cards > :nth-child(3) { --d: 0.9s; }
 .slide.active .flow ~ .cards > :nth-child(4) { --d: 1s; }
 
-/* El avatar aparece a saltos, como un sprite */
-.slide.active .avatar {
+/* El avatar y las ilustraciones aparecen a saltos, como un sprite */
+.slide.active :is(.avatar, .hero) {
   animation: pop 0.5s steps(5, end) 0.2s both;
+}
+
+/* La burbuja de las preguntas sale después del avatar */
+.slide.active .bubble {
+  animation: pop 0.4s steps(4, end) 0.7s both;
+}
+
+.slide.active .icon-row > * {
+  animation: pop 0.4s steps(4, end) var(--d, 0.3s) both;
+}
+
+.slide.active .icon-row > :nth-child(2) { --d: 0.5s; }
+.slide.active .icon-row > :nth-child(3) { --d: 0.7s; }
+.slide.active .icon-row > :nth-child(4) { --d: 0.9s; }
+
+.slide.active .qr {
+  animation: pop 0.5s steps(5, end) 0.5s both;
 }
 
 /* La frase final aparece la última */

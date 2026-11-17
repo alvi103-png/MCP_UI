@@ -1,6 +1,8 @@
 ---
 import { Font } from 'astro:assets';
 import { Code } from 'astro:components';
+import PixelIcon from '../components/PixelIcon.astro';
+import type { IconName } from '../components/pixel-icons';
 import Slide from '../components/Slide.astro';
 import { schedule } from '../data/agenda';
 import { TOKEN_DEL_TALLER } from '../data/taller';
@@ -9,6 +11,16 @@ import '../styles/slides.css';
 
 const theme = 'css-variables';
 const tokenSlide = TOKEN_DEL_TALLER || 'Falta WORKSHOP_TOKEN en .dev.vars';
+
+// Los mismos iconos que en la portada de la web
+const blockIcons: IconName[] = ['mcp-ui', 'webmcp', 'jev', 'ia-local'];
+
+const agendaIcon = (item: (typeof schedule)[number]): IconName => {
+  if (item.block) return blockIcons[item.block - 1];
+  if (item.kind === 'intro') return 'flag';
+  if (item.kind === 'descanso') return 'coffee';
+  return item === schedule.at(-1) ? 'ask' : 'cart';
+};
 const B1 = 'Bloque 1 · MCP UI';
 const B2 = 'Bloque 2 · WebMCP';
 const B3 = 'Bloque 3 · Jev';
@@ -214,7 +226,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       />
 
       <Slide kind="statement">
-        <div class="intro">
+        <div class="split">
           <div>
             <p class="big">Hola, soy <span class="accent">midudev</span></p>
             <p class="sub">Miguel Ángel Durán · Desarrollador de software y divulgador de programación</p>
@@ -226,18 +238,26 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       <Slide kind="statement">
         <p class="big">Los agentes de IA ya no solo conversan.</p>
         <p class="big"><span class="accent">Navegan</span>, usan <span class="accent">herramientas</span> y <span class="accent">actúan</span> en nombre del usuario.</p>
+        <div class="icon-row">
+          <PixelIcon name="browser" size={128} />
+          <PixelIcon name="tool" size={128} />
+          <PixelIcon name="cursor" size={128} />
+        </div>
       </Slide>
 
       <Slide kind="statement">
-        <p class="big">¿Está tu web preparada para un usuario que no es una persona?</p>
+        <div class="split">
+          <p class="big">¿Está tu web preparada para un usuario que no es una persona?</p>
+          <PixelIcon name="robot" size={448} class="hero blink" />
+        </div>
       </Slide>
 
       <Slide title="Hoy construimos una tienda… para agentes">
         <ol class="cards four">
-          <li><span class="n">01</span><h3>MCP UI</h3><p>El catálogo, como interfaz dentro del chat</p></li>
-          <li><span class="n">02</span><h3>WebMCP</h3><p>La web expone herramientas a los agentes del navegador</p></li>
-          <li><span class="n">03</span><h3>Jev</h3><p>Decisiones rápidas que el código usa tal cual</p></li>
-          <li><span class="n">04</span><h3>IA local</h3><p>Modelos que se ejecutan en el navegador</p></li>
+          <li><div class="card-top"><span class="n">01</span><PixelIcon name="mcp-ui" size={80} /></div><h3>MCP UI</h3><p>El catálogo, como interfaz dentro del chat</p></li>
+          <li><div class="card-top"><span class="n">02</span><PixelIcon name="webmcp" size={80} /></div><h3>WebMCP</h3><p>La web expone herramientas a los agentes del navegador</p></li>
+          <li><div class="card-top"><span class="n">03</span><PixelIcon name="jev" size={80} /></div><h3>Jev</h3><p>Decisiones rápidas que el código usa tal cual</p></li>
+          <li><div class="card-top"><span class="n">04</span><PixelIcon name="ia-local" size={80} /></div><h3>IA local</h3><p>Modelos que se ejecutan en el navegador</p></li>
         </ol>
         <p class="foot">Explicación → código en directo → reto guiado. Así cuatro veces.</p>
       </Slide>
@@ -247,6 +267,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
           {
             schedule.map((item) => (
               <li class={item.kind}>
+                <PixelIcon name={agendaIcon(item)} size={48} />
                 <span class="time">{item.start}</span>
                 <span class="what">
                   {item.block && <span class="accent">{item.block} · </span>}
@@ -260,12 +281,18 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       </Slide>
 
       <Slide title="Antes de empezar">
-        <ol class="steps">
-          <li><span class="n">1</span><div><h3>Clona el repositorio</h3><p><code>git clone … && cd taller</code></p></div></li>
-          <li><span class="n">2</span><div><h3>Abre la web del taller</h3><p>Agenda, retos y documentación de las APIs</p></div></li>
-          <li><span class="n">3</span><div><h3>Apunta el token</h3><p>Una sola clave para Jev y OpenAI. Caduca al terminar.</p></div></li>
-          <li><span class="n">4</span><div><h3>Comprueba</h3><p>Chrome actualizado · Node.js 22+ · <code>node -v</code></p></div></li>
-        </ol>
+        <div class="split">
+          <ol class="steps">
+            <li><span class="n">1</span><div><h3>Clona el repositorio</h3><p><code>git clone https://github.com/midudev/upskilling-mwc-taller</code><br /><code>cd upskilling-mwc-taller</code></p></div></li>
+            <li><span class="n">2</span><div><h3>Abre la web del taller</h3><p>Agenda, retos y documentación de las APIs</p></div></li>
+            <li><span class="n">3</span><div><h3>Apunta el token</h3><p>Una sola clave para Jev y OpenAI. Caduca al terminar.</p></div></li>
+            <li><span class="n">4</span><div><h3>Comprueba</h3><p>Chrome actualizado · Node.js 22+ · <code>node -v</code></p></div></li>
+          </ol>
+          <figure class="qr">
+            <img src="/slides/qr-taller.svg" alt="Código QR del repositorio del taller" width="29" height="29" />
+            <figcaption><code>midu.link/taller</code></figcaption>
+          </figure>
+        </div>
       </Slide>
 
       <Slide kind="statement" label="Token del taller">
@@ -276,23 +303,54 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
 
       <!-- ─────────────── Bloque 1 · MCP UI ─────────────── -->
       <Slide kind="section" label="Bloque 1 · 15:10">
-        <p class="num">01</p>
-        <h2>MCP UI</h2>
-        <p class="sub">Interfaces interactivas dentro del chat</p>
+        <div class="split">
+          <div>
+            <p class="num">01</p>
+            <h2>MCP UI</h2>
+            <p class="sub">Interfaces interactivas dentro del chat</p>
+          </div>
+          <PixelIcon name="mcp-ui" size={384} class="hero" />
+        </div>
       </Slide>
 
-      <Slide label={B1} title="MCP en un minuto">
-        <div class="flow">
-          <div class="box"><h3>Cliente</h3><p>Claude, ChatGPT, VS Code…</p></div>
-          <div class="arrow">⇄<span>JSON-RPC</span></div>
-          <div class="box hl"><h3>Servidor MCP</h3><p>Tu código</p></div>
+      <Slide kind="statement" label={B1}>
+        <p class="big">MCP: un idioma común entre la IA y <span class="accent">tu código</span>.</p>
+        <p class="sub">Model Context Protocol. Un estándar abierto: escribes el servidor una vez y funciona en Claude, ChatGPT, VS Code, Cursor…</p>
+        <div class="icon-row">
+          <PixelIcon name="chat" size={128} />
+          <PixelIcon name="arrows" size={96} />
+          <PixelIcon name="server" size={128} />
         </div>
+      </Slide>
+
+      <Slide label={B1} title="Las piezas">
+        <div class="flow chain">
+          <div class="box"><PixelIcon name="chat" size={80} /><h3>Cliente</h3><p>Claude, ChatGPT, VS Code… con su modelo</p></div>
+          <div class="arrow"><PixelIcon name="arrows" size={80} /><span>JSON-RPC</span></div>
+          <div class="box hl"><PixelIcon name="server" size={80} /><h3>Servidor MCP</h3><p>Tu código</p></div>
+          <div class="arrow"><PixelIcon name="arrows" size={80} /><span>fetch, SQL…</span></div>
+          <div class="box"><PixelIcon name="cloud" size={80} /><h3>Tus datos</h3><p>APIs, base de datos, ficheros</p></div>
+        </div>
+        <p class="foot">En local (stdio) o en remoto (HTTP). El modelo nunca toca tu API: solo usa lo que el servidor le ofrece.</p>
+      </Slide>
+
+      <Slide label={B1} title="Qué puede ofrecer un servidor">
         <ul class="cards three">
-          <li><h3>Tools</h3><p>Acciones que el modelo puede ejecutar</p></li>
-          <li><h3>Resources</h3><p>Datos que el cliente puede leer</p></li>
-          <li><h3>Prompts</h3><p>Plantillas que elige el usuario</p></li>
+          <li><div class="card-top"><span class="n">decide el modelo</span><PixelIcon name="tool" size={80} /></div><h3>Tools</h3><p>Acciones que el modelo ejecuta cuando las necesita</p><p class="eg"><code>ver_equipo("Barça")</code></p></li>
+          <li><div class="card-top"><span class="n">decide la app</span><PixelIcon name="doc" size={80} /></div><h3>Resources</h3><p>Datos que el cliente lee y añade al contexto</p><p class="eg"><code>ui://laliga/vista.html</code></p></li>
+          <li><div class="card-top"><span class="n">decide el usuario</span><PixelIcon name="terminal" size={80} /></div><h3>Prompts</h3><p>Plantillas que el usuario elige, como un comando</p><p class="eg"><code>/resumen-jornada</code></p></li>
         </ul>
-        <p class="foot">Un estándar abierto: escribes el servidor una vez y funciona en cualquier cliente.</p>
+        <p class="foot">Hoy, sobre todo tools… y un resource muy especial: <span class="accent">ui://</span></p>
+      </Slide>
+
+      <Slide label={B1} title="Qué pasa cuando preguntas">
+        <ol class="steps">
+          <li><span class="n">1</span><PixelIcon name="doc" size={80} /><div><h3>El cliente pide las herramientas</h3><p><code>tools/list</code>: nombre, descripción y esquema de cada una</p></div></li>
+          <li><span class="n">2</span><PixelIcon name="chat" size={80} /><div><h3>El usuario pregunta</h3><p>«¿Cómo le fue al Barça en el último partido?»</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="robot" size={80} class="blink" /><div><h3>El modelo elige herramienta y argumentos</h3><p><code>tools/call</code> → <code>ver_equipo({'{'} equipo: "Barça" {'}'})</code></p></div></li>
+          <li><span class="n">4</span><PixelIcon name="server" size={80} /><div><h3>Tu código responde</h3><p>El servidor llama a la API y el modelo redacta con el resultado</p></div></li>
+        </ol>
+        <p class="foot">El modelo decide solo con el nombre y la descripción.</p>
       </Slide>
 
       <Slide label={B1} title="Un servidor MCP: una herramienta">
@@ -301,24 +359,29 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
 
       <Slide label={B1} title="En directo: LaLiga por MCP">
         <ol class="steps">
-          <li><span class="n">1</span><div><h3>Tres herramientas</h3><p><code>ver_clasificacion</code> · <code>ver_resultados</code> · <code>ver_equipo</code></p></div></li>
-          <li><span class="n">2</span><div><h3>Datos reales</h3><p>La API pública de ESPN, sin clave</p></div></li>
-          <li><span class="n">3</span><div><h3>Lo conectamos al chat</h3><p>«¿Cómo le fue al Barça en el último partido?»</p></div></li>
+          <li><span class="n">1</span><PixelIcon name="tool" size={80} /><div><h3>Tres herramientas</h3><p><code>ver_clasificacion</code> · <code>ver_resultados</code> · <code>ver_equipo</code></p></div></li>
+          <li><span class="n">2</span><PixelIcon name="trophy" size={80} /><div><h3>Datos reales</h3><p>La API pública de ESPN, sin clave</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="chat" size={80} /><div><h3>Lo conectamos al chat</h3><p>«¿Cómo le fue al Barça en el último partido?»</p></div></li>
         </ol>
         <p class="foot">directo/liga/1-mcp</p>
       </Slide>
 
       <Slide kind="statement" label={B1}>
-        <p class="big">El problema: una herramienta solo devuelve <span class="accent">texto</span>.</p>
-        <p class="sub">Veinte equipos en una tabla de markdown. Sin escudos, sin colores, sin poder tocar nada.</p>
+        <div class="split">
+          <div>
+            <p class="big">El problema: una herramienta solo devuelve <span class="accent">texto</span>.</p>
+            <p class="sub">Veinte equipos en una tabla de markdown. Sin escudos, sin colores, sin poder tocar nada.</p>
+          </div>
+          <PixelIcon name="doc" size={320} class="hero" />
+        </div>
       </Slide>
 
       <Slide label={B1} title="MCP Apps: la herramienta trae su interfaz">
         <ol class="steps">
-          <li><span class="n">1</span><div><h3>La herramienta declara una vista</h3><p><code>_meta.ui.resourceUri = "ui://laliga/vista.html"</code></p></div></li>
-          <li><span class="n">2</span><div><h3>El modelo llama a la herramienta</h3><p>Texto para el modelo, datos para la vista</p></div></li>
-          <li><span class="n">3</span><div><h3>El cliente pinta el HTML</h3><p>En un iframe aislado, dentro de la conversación</p></div></li>
-          <li><span class="n">4</span><div><h3>Hablan en los dos sentidos</h3><p>La vista recibe resultados y puede llamar a otras herramientas</p></div></li>
+          <li><span class="n">1</span><PixelIcon name="doc" size={80} /><div><h3>La herramienta declara una vista</h3><p><code>_meta.ui.resourceUri = "ui://laliga/vista.html"</code></p></div></li>
+          <li><span class="n">2</span><PixelIcon name="robot" size={80} /><div><h3>El modelo llama a la herramienta</h3><p>Texto para el modelo, datos para la vista</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="browser" size={80} /><div><h3>El cliente pinta el HTML</h3><p>En un iframe aislado, dentro de la conversación</p></div></li>
+          <li><span class="n">4</span><PixelIcon name="arrows" size={80} /><div><h3>Hablan en los dos sentidos</h3><p>La vista recibe resultados y puede llamar a otras herramientas</p></div></li>
         </ol>
       </Slide>
 
@@ -336,36 +399,46 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
 
       <Slide label={B1} title="En directo: LaLiga con interfaz">
         <ol class="steps">
-          <li><span class="n">1</span><div><h3>Las mismas herramientas</h3><p><code>registerAppTool</code> + <code>ui://laliga/vista.html</code></p></div></li>
-          <li><span class="n">2</span><div><h3>Datos para la vista</h3><p>Tabla, resultados y ficha de equipo con escudos</p></div></li>
-          <li><span class="n">3</span><div><h3>La vista llama al servidor</h3><p>Clic en un equipo → <code>ver_equipo</code>, sin pasar por el modelo</p></div></li>
+          <li><span class="n">1</span><PixelIcon name="tool" size={80} /><div><h3>Las mismas herramientas</h3><p><code>registerAppTool</code> + <code>ui://laliga/vista.html</code></p></div></li>
+          <li><span class="n">2</span><PixelIcon name="mcp-ui" size={80} /><div><h3>Datos para la vista</h3><p>Tabla, resultados y ficha de equipo con escudos</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="cursor" size={80} /><div><h3>La vista llama al servidor</h3><p>Clic en un equipo → <code>ver_equipo</code>, sin pasar por el modelo</p></div></li>
         </ol>
         <p class="foot">directo/liga/2-mcp-ui</p>
       </Slide>
 
       <Slide kind="reto" label={B1}>
-        <p class="num">Reto 1</p>
-        <h2>El catálogo dentro del chat</h2>
-        <ul>
-          <li>Convierte <code>buscar_productos</code> en una herramienta con interfaz</li>
-          <li>Registra el recurso <code>ui://</code></li>
-          <li>Haz que el botón «Añadir» llame al servidor</li>
-        </ul>
-        <p class="path">retos/01-mcp-ui/inicio · 18 min</p>
+        <div class="split">
+          <div>
+            <p class="num">Reto 1</p>
+            <h2>El catálogo dentro del chat</h2>
+            <ul>
+              <li>Convierte <code>buscar_productos</code> en una herramienta con interfaz</li>
+              <li>Registra el recurso <code>ui://</code></li>
+              <li>Haz que el botón «Añadir» llame al servidor</li>
+            </ul>
+            <p class="path">retos/01-mcp-ui/inicio · 18 min</p>
+          </div>
+          <PixelIcon name="mcp-ui" size={320} class="hero" />
+        </div>
       </Slide>
 
       <!-- ─────────────── Bloque 2 · WebMCP ─────────────── -->
       <Slide kind="section" label="Bloque 2 · 15:50">
-        <p class="num">02</p>
-        <h2>WebMCP</h2>
-        <p class="sub">Tu web, como herramientas para los agentes del navegador</p>
+        <div class="split">
+          <div>
+            <p class="num">02</p>
+            <h2>WebMCP</h2>
+            <p class="sub">Tu web, como herramientas para los agentes del navegador</p>
+          </div>
+          <PixelIcon name="webmcp" size={384} class="hero" />
+        </div>
       </Slide>
 
       <Slide label={B2} title="Así usa hoy tu web un agente">
         <ol class="steps">
-          <li><span class="n">1</span><div><h3>Hace una captura o lee el DOM</h3><p>Miles de tokens por cada paso</p></div></li>
-          <li><span class="n">2</span><div><h3>Adivina qué botón pulsar</h3><p>«¿Será este icono el carrito?»</p></div></li>
-          <li><span class="n">3</span><div><h3>Simula un clic y vuelve a mirar</h3><p>Lento, caro y frágil</p></div></li>
+          <li><span class="n">1</span><PixelIcon name="eye" size={80} /><div><h3>Hace una captura o lee el DOM</h3><p>Miles de tokens por cada paso</p></div></li>
+          <li><span class="n">2</span><PixelIcon name="question" size={80} /><div><h3>Adivina qué botón pulsar</h3><p>«¿Será este icono el carrito?»</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="cursor" size={80} /><div><h3>Simula un clic y vuelve a mirar</h3><p>Lento, caro y frágil</p></div></li>
         </ol>
         <p class="foot">Cambias un <code>div</code> de sitio y el agente se pierde.</p>
       </Slide>
@@ -373,11 +446,16 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       <Slide kind="statement" label={B2}>
         <p class="big">WebMCP: la web <span class="accent">le dice</span> al agente qué puede hacer.</p>
         <p class="sub">Tu página registra herramientas con <code>document.modelContext</code>. El agente las llama: sin leer la pantalla, sin simular clics.</p>
+        <div class="icon-row">
+          <PixelIcon name="webmcp" size={128} />
+          <PixelIcon name="arrows" size={96} />
+          <PixelIcon name="robot" size={128} class="blink" />
+        </div>
       </Slide>
 
       <Slide label={B2} title="MCP y WebMCP no compiten">
         <table>
-          <thead><tr><th></th><th>MCP</th><th>WebMCP</th></tr></thead>
+          <thead><tr><th></th><th><span class="ico"><PixelIcon name="server" size={48} />MCP</span></th><th><span class="ico"><PixelIcon name="webmcp" size={48} />WebMCP</span></th></tr></thead>
           <tbody>
             <tr><td>Dónde vive</td><td>En un servidor</td><td>En la página, en el navegador</td></tr>
             <tr><td>Quién lo usa</td><td>Asistentes de chat e IDE</td><td>Agentes del navegador</td></tr>
@@ -407,51 +485,66 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
 
       <Slide label={B2} title="Estado actual">
         <ul class="cards three">
-          <li><h3>Origin trial</h3><p>En Chrome y Edge. Todavía no es estable.</p></li>
-          <li><h3>En local</h3><p><code>chrome://flags/</code><br /><code>#enable-webmcp-testing</code></p></li>
-          <li><h3>Para probar</h3><p>DevTools → Application → WebMCP</p></li>
+          <li><PixelIcon name="key" size={80} /><h3>Origin trial</h3><p>En Chrome y Edge. Todavía no es estable.</p></li>
+          <li><PixelIcon name="flask" size={80} /><h3>En local</h3><p><code>chrome://flags/</code><br /><code>#enable-webmcp-testing</code></p></li>
+          <li><PixelIcon name="search" size={80} /><h3>Para probar</h3><p>DevTools → Application → WebMCP</p></li>
         </ul>
         <p class="foot">Es una mejora progresiva: si el navegador no lo tiene, tu web funciona igual.</p>
       </Slide>
 
       <Slide kind="reto" label={B2}>
-        <p class="num">Reto 2</p>
-        <h2>La tienda se abre a los agentes</h2>
-        <ul>
-          <li>Registra <code>buscar_productos</code>, <code>anadir_al_carrito</code>, <code>ver_producto</code> y <code>vaciar_carrito</code></li>
-          <li>Añade las anotaciones que tocan</li>
-          <li>Convierte el formulario de ofertas en una herramienta</li>
-        </ul>
-        <p class="path">retos/02-webmcp/inicio · 17 min</p>
+        <div class="split">
+          <div>
+            <p class="num">Reto 2</p>
+            <h2>La tienda se abre a los agentes</h2>
+            <ul>
+              <li>Registra <code>buscar_productos</code>, <code>anadir_al_carrito</code>, <code>ver_producto</code> y <code>vaciar_carrito</code></li>
+              <li>Añade las anotaciones que tocan</li>
+              <li>Convierte el formulario de ofertas en una herramienta</li>
+            </ul>
+            <p class="path">retos/02-webmcp/inicio · 17 min</p>
+          </div>
+          <PixelIcon name="webmcp" size={320} class="hero" />
+        </div>
       </Slide>
 
       <Slide kind="statement">
-        <p class="num">16:25</p>
-        <p class="big">Descanso</p>
-        <p class="sub">10 minutos. Volvemos a las 16:35.</p>
+        <div class="split">
+          <div>
+            <p class="num">16:25</p>
+            <p class="big">Descanso</p>
+            <p class="sub">10 minutos. Volvemos a las 16:35.</p>
+          </div>
+          <PixelIcon name="coffee" size={384} class="hero steam" />
+        </div>
       </Slide>
 
       <!-- ─────────────── Bloque 3 · Jev ─────────────── -->
       <Slide kind="section" label="Bloque 3 · 16:35">
-        <p class="num">03</p>
-        <h2>Jev</h2>
-        <p class="sub">Decisiones rápidas y estructuradas</p>
+        <div class="split">
+          <div>
+            <p class="num">03</p>
+            <h2>Jev</h2>
+            <p class="sub">Decisiones rápidas y estructuradas</p>
+          </div>
+          <PixelIcon name="jev" size={384} class="hero" />
+        </div>
       </Slide>
 
       <Slide label={B3} title="No siempre quieres que el modelo escriba">
-        <ul class="list big-list">
-          <li>¿Esta reseña es spam?</li>
-          <li>¿A qué equipo va este ticket?</li>
-          <li>¿Cuánto encaja este producto con lo que busca el cliente?</li>
+        <ul class="list big-list icon-list">
+          <li><PixelIcon name="toggle" size={96} />¿Esta reseña es spam?</li>
+          <li><PixelIcon name="jev" size={96} />¿A qué equipo va este ticket?</li>
+          <li><PixelIcon name="score" size={96} />¿Cuánto encaja este producto con lo que busca el cliente?</li>
         </ul>
         <p class="foot">Con un modelo generativo: «responde solo con JSON»… esperar, parsear y cruzar los dedos.</p>
       </Slide>
 
       <Slide label={B3} title="Jev responde preguntas, no escribe texto">
         <ul class="cards three">
-          <li><span class="n">choice</span><h3>Elegir</h3><p>Una opción entre varias, con la probabilidad de cada una</p></li>
-          <li><span class="n">score</span><h3>Puntuar</h3><p>Una posición en una escala que tú defines</p></li>
-          <li><span class="n">noul</span><h3>Sí o no</h3><p>La probabilidad de «sí», de 0 a 1</p></li>
+          <li><div class="card-top"><span class="n">choice</span><PixelIcon name="jev" size={80} /></div><h3>Elegir</h3><p>Una opción entre varias, con la probabilidad de cada una</p></li>
+          <li><div class="card-top"><span class="n">score</span><PixelIcon name="score" size={80} /></div><h3>Puntuar</h3><p>Una posición en una escala que tú defines</p></li>
+          <li><div class="card-top"><span class="n">noul</span><PixelIcon name="toggle" size={80} /></div><h3>Sí o no</h3><p>La probabilidad de «sí», de 0 a 1</p></li>
         </ul>
         <p class="foot">Un contenido (<code>state</code>) + varias preguntas (<code>questions</code>) = una sola llamada.</p>
       </Slide>
@@ -472,7 +565,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       <Slide label={B3} title="Cuándo usarlo">
         <div class="cols">
           <div>
-            <h3 class="accent">Sí</h3>
+            <h3 class="accent ico"><PixelIcon name="check" size={64} />Sí</h3>
             <ul class="list">
               <li>Clasificar y enrutar</li>
               <li>Moderar contenido</li>
@@ -481,7 +574,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
             </ul>
           </div>
           <div>
-            <h3 class="muted">No</h3>
+            <h3 class="muted ico"><PixelIcon name="cross" size={64} />No</h3>
             <ul class="list">
               <li>Redactar texto</li>
               <li>Conversar</li>
@@ -492,39 +585,51 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       </Slide>
 
       <Slide kind="reto" label={B3}>
-        <p class="num">Reto 3</p>
-        <h2>Una tienda que decide</h2>
-        <ul>
-          <li>Búsqueda inteligente: una pregunta <code>score</code> por producto</li>
-          <li>Moderación de reseñas con <code>noul</code>, <code>choice</code> y <code>score</code></li>
-          <li>Extra: exponla como herramienta WebMCP</li>
-        </ul>
-        <p class="path">retos/03-jev/inicio · 15 min</p>
+        <div class="split">
+          <div>
+            <p class="num">Reto 3</p>
+            <h2>Una tienda que decide</h2>
+            <ul>
+              <li>Búsqueda inteligente: una pregunta <code>score</code> por producto</li>
+              <li>Moderación de reseñas con <code>noul</code>, <code>choice</code> y <code>score</code></li>
+              <li>Extra: exponla como herramienta WebMCP</li>
+            </ul>
+            <p class="path">retos/03-jev/inicio · 15 min</p>
+          </div>
+          <PixelIcon name="jev" size={320} class="hero" />
+        </div>
       </Slide>
 
       <!-- ─────────────── Bloque 4 · IA local ─────────────── -->
       <Slide kind="section" label="Bloque 4 · 17:05">
-        <p class="num">04</p>
-        <h2>IA en local</h2>
-        <p class="sub">El modelo se ejecuta en el navegador</p>
+        <div class="split">
+          <div>
+            <p class="num">04</p>
+            <h2>IA en local</h2>
+            <p class="sub">El modelo se ejecuta en el navegador</p>
+          </div>
+          <PixelIcon name="ia-local" size={384} class="hero" />
+        </div>
       </Slide>
 
       <Slide label={B4} title="¿Por qué en local?">
         <ul class="cards three">
-          <li><h3>Privacidad</h3><p>Los datos no salen del dispositivo</p></li>
-          <li><h3>Coste</h3><p>Cero por petición. Sin API key.</p></li>
-          <li><h3>Sin conexión</h3><p>Funciona en un avión</p></li>
+          <li><PixelIcon name="lock" size={80} /><h3>Privacidad</h3><p>Los datos no salen del dispositivo</p></li>
+          <li><PixelIcon name="coin" size={80} /><h3>Coste</h3><p>Cero por petición. Sin API key.</p></li>
+          <li><PixelIcon name="plane" size={80} /><h3>Sin conexión</h3><p>Funciona en un avión</p></li>
         </ul>
       </Slide>
 
       <Slide label={B4} title="Dos caminos">
         <div class="cols">
           <div class="box">
+            <PixelIcon name="browser-ai" size={96} />
             <h3>APIs integradas de Chrome</h3>
             <p>Gemini Nano dentro del navegador. Chrome descarga y gestiona el modelo.</p>
             <p class="muted">Summarizer · Prompt · Translator · Language Detector</p>
           </div>
           <div class="box">
+            <PixelIcon name="gpu" size={96} />
             <h3>WebGPU + Transformers.js</h3>
             <p>Tú eliges el modelo. Se ejecuta en la GPU del usuario.</p>
             <p class="muted">Cualquier modelo ONNX de Hugging Face</p>
@@ -545,17 +650,20 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       </Slide>
 
       <Slide label={B4} title="Las limitaciones">
-        <ul class="list big-list">
-          <li>Solo Chrome de escritorio, y con hardware: 22 GB de disco, GPU con 4 GB</li>
-          <li>La primera vez hay que descargar el modelo</li>
-          <li>Modelos pequeños: tareas acotadas, no razonamiento</li>
-          <li>Siempre necesitas un plan B</li>
-        </ul>
+        <div class="split">
+          <ul class="list big-list">
+            <li>Solo Chrome de escritorio, y con hardware: 22 GB de disco, GPU con 4 GB</li>
+            <li>La primera vez hay que descargar el modelo</li>
+            <li>Modelos pequeños: tareas acotadas, no razonamiento</li>
+            <li>Siempre necesitas un plan B</li>
+          </ul>
+          <PixelIcon name="warning" size={256} class="hero" />
+        </div>
       </Slide>
 
       <Slide label={B4} title="¿Local o nube?">
         <table>
-          <thead><tr><th></th><th>Local</th><th>Nube</th></tr></thead>
+          <thead><tr><th></th><th><span class="ico"><PixelIcon name="ia-local" size={48} />Local</span></th><th><span class="ico"><PixelIcon name="cloud" size={48} />Nube</span></th></tr></thead>
           <tbody>
             <tr><td>Privacidad</td><td>No sale del dispositivo</td><td>Viaja a un tercero</td></tr>
             <tr><td>Coste</td><td>Cero por petición</td><td>Por token</td></tr>
@@ -567,23 +675,28 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       </Slide>
 
       <Slide kind="reto" label={B4}>
-        <p class="num">Reto 4</p>
-        <h2>Reseñas resumidas sin salir del navegador</h2>
-        <ul>
-          <li>Comprueba la disponibilidad de <code>Summarizer</code></li>
-          <li>Resume en streaming, con progreso de descarga</li>
-          <li>Extra: pros y contras en JSON con la Prompt API</li>
-        </ul>
-        <p class="path">retos/04-ia-local/inicio · 17 min</p>
+        <div class="split">
+          <div>
+            <p class="num">Reto 4</p>
+            <h2>Reseñas resumidas sin salir del navegador</h2>
+            <ul>
+              <li>Comprueba la disponibilidad de <code>Summarizer</code></li>
+              <li>Resume en streaming, con progreso de descarga</li>
+              <li>Extra: pros y contras en JSON con la Prompt API</li>
+            </ul>
+            <p class="path">retos/04-ia-local/inicio · 17 min</p>
+          </div>
+          <PixelIcon name="ia-local" size={320} class="hero" />
+        </div>
       </Slide>
 
       <!-- ─────────────── Cierre ─────────────── -->
       <Slide title="Las cuatro piezas, juntas">
         <ol class="cards four">
-          <li><span class="n">01</span><h3>MCP UI</h3><p>El catálogo aparece en el chat del asistente</p></li>
-          <li><span class="n">02</span><h3>WebMCP</h3><p>El agente del navegador busca y llena el carrito</p></li>
-          <li><span class="n">03</span><h3>Jev</h3><p>La tienda recomienda y modera en milisegundos</p></li>
-          <li><span class="n">04</span><h3>IA local</h3><p>Las reseñas se resumen en el dispositivo</p></li>
+          <li><div class="card-top"><span class="n">01</span><PixelIcon name="mcp-ui" size={80} /></div><h3>MCP UI</h3><p>El catálogo aparece en el chat del asistente</p></li>
+          <li><div class="card-top"><span class="n">02</span><PixelIcon name="webmcp" size={80} /></div><h3>WebMCP</h3><p>El agente del navegador busca y llena el carrito</p></li>
+          <li><div class="card-top"><span class="n">03</span><PixelIcon name="jev" size={80} /></div><h3>Jev</h3><p>La tienda recomienda y modera en milisegundos</p></li>
+          <li><div class="card-top"><span class="n">04</span><PixelIcon name="ia-local" size={80} /></div><h3>IA local</h3><p>Las reseñas se resumen en el dispositivo</p></li>
         </ol>
         <p class="foot">Una misma tienda, lista para personas y para agentes.</p>
       </Slide>
@@ -591,29 +704,37 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       <Slide title="¿Cuándo uso cada una?">
         <table class="when">
           <tbody>
-            <tr><td>Quiero estar dentro de ChatGPT, Claude o el IDE</td><td class="accent">MCP UI</td></tr>
-            <tr><td>Quiero que los agentes usen bien mi web</td><td class="accent">WebMCP</td></tr>
-            <tr><td>Mi código necesita una decisión, no un texto</td><td class="accent">Jev</td></tr>
-            <tr><td>Datos sensibles, tareas pequeñas, sin coste</td><td class="accent">IA local</td></tr>
-            <tr><td>Razonar, redactar, mucho contexto</td><td class="muted">Un LLM en la nube</td></tr>
+            <tr><td>Quiero estar dentro de ChatGPT, Claude o el IDE</td><td class="accent"><span class="ico"><PixelIcon name="mcp-ui" size={48} />MCP UI</span></td></tr>
+            <tr><td>Quiero que los agentes usen bien mi web</td><td class="accent"><span class="ico"><PixelIcon name="webmcp" size={48} />WebMCP</span></td></tr>
+            <tr><td>Mi código necesita una decisión, no un texto</td><td class="accent"><span class="ico"><PixelIcon name="jev" size={48} />Jev</span></td></tr>
+            <tr><td>Datos sensibles, tareas pequeñas, sin coste</td><td class="accent"><span class="ico"><PixelIcon name="ia-local" size={48} />IA local</span></td></tr>
+            <tr><td>Razonar, redactar, mucho contexto</td><td class="muted"><span class="ico"><PixelIcon name="cloud" size={48} />Un LLM en la nube</span></td></tr>
           </tbody>
         </table>
       </Slide>
 
       <Slide title="Para seguir">
         <ul class="links">
-          <li><span>MCP Apps</span><code>modelcontextprotocol.io</code></li>
-          <li><span>WebMCP</span><code>developer.chrome.com/docs/ai/webmcp</code></li>
-          <li><span>Jev</span><code>docs.typesafe.ai</code></li>
-          <li><span>IA integrada</span><code>developer.chrome.com/docs/ai/built-in</code></li>
-          <li><span>Transformers.js</span><code>huggingface.co/docs/transformers.js</code></li>
+          <li><span class="ico"><PixelIcon name="mcp-ui" size={48} />MCP Apps</span><code>modelcontextprotocol.io</code></li>
+          <li><span class="ico"><PixelIcon name="webmcp" size={48} />WebMCP</span><code>developer.chrome.com/docs/ai/webmcp</code></li>
+          <li><span class="ico"><PixelIcon name="jev" size={48} />Jev</span><code>docs.typesafe.ai</code></li>
+          <li><span class="ico"><PixelIcon name="browser-ai" size={48} />IA integrada</span><code>developer.chrome.com/docs/ai/built-in</code></li>
+          <li><span class="ico"><PixelIcon name="gpu" size={48} />Transformers.js</span><code>huggingface.co/docs/transformers.js</code></li>
         </ul>
         <p class="foot">El repositorio y esta web se quedan contigo.</p>
       </Slide>
 
       <Slide kind="statement">
-        <p class="big">¿Preguntas?</p>
-        <p class="sub"><span class="accent">@midudev</span> · midu.dev</p>
+        <div class="split">
+          <div>
+            <p class="big">¿Preguntas?</p>
+            <p class="sub"><span class="accent">@midudev</span> · midu.dev</p>
+          </div>
+          <div class="asker">
+            <img class="avatar" src="/slides/midudev-pixel.png" alt="" width="64" height="64" />
+            <PixelIcon name="ask" size={176} class="bubble" />
+          </div>
+        </div>
       </Slide>
 
       <Slide
