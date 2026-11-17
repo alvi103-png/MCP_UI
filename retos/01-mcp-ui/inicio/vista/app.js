@@ -78,7 +78,6 @@ async function añadir(producto, $boton) {
   } finally {
     $boton.disabled = false;
   }
-  $estado.textContent = 'TODO 5: todavía no se puede añadir al carrito.';
 }
 
 // TODO 4: recibe el resultado de la herramienta que ha abierto esta vista.
