@@ -1,0 +1,606 @@
+/* Presentación: escenario fijo de 1920×1080 que se escala a la ventana */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-size: 16px;
+  cursor: default;
+}
+
+.deck {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1920px;
+  height: 1080px;
+  background: var(--bg);
+  transform-origin: center;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  padding: 110px 140px 130px;
+  font-size: 38px;
+  line-height: 1.4;
+}
+
+.slide.active {
+  display: flex;
+}
+
+.slide-label {
+  position: absolute;
+  top: 70px;
+  left: 140px;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Las slides de contenido empiezan arriba, bajo la etiqueta del bloque */
+.slide.content {
+  justify-content: flex-start;
+  padding-top: 150px;
+}
+
+.slide h2 {
+  font-size: 76px;
+  margin-bottom: 52px;
+  max-width: 1600px;
+}
+
+.slide h3 {
+  font-size: 46px;
+  line-height: 1.2;
+}
+
+.slide code {
+  font-size: 0.92em;
+}
+
+.slide :not(pre) > code {
+  padding: 0.05em 0.3em;
+}
+
+.slide p {
+  color: var(--muted);
+}
+
+.foot {
+  margin-top: 56px;
+  font-size: 34px;
+}
+
+/* ── Imagen a pantalla completa (portada y cierre) ── */
+
+.slide.image {
+  padding: 0;
+}
+
+.slide.image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── Frase ── */
+
+.statement .big {
+  font-family: var(--pixel);
+  font-size: 112px;
+  line-height: 1.08;
+  color: var(--fg);
+  max-width: 1560px;
+  text-wrap: balance;
+}
+
+.statement .big + .big {
+  margin-top: 0.35em;
+}
+
+.statement .sub,
+.section .sub {
+  margin-top: 48px;
+  font-size: 40px;
+  max-width: 1400px;
+}
+
+.num {
+  font-family: var(--pixel);
+  font-size: 44px;
+  color: var(--accent) !important;
+  margin-bottom: 16px;
+}
+
+/* ── Presentación con avatar en pixel art ── */
+
+.intro {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 80px;
+}
+
+.avatar {
+  width: 384px; /* 64px × 6: múltiplo entero para que los píxeles salgan iguales */
+  height: 384px;
+  image-rendering: pixelated;
+}
+
+/* ── Portada de bloque ── */
+
+.section .num {
+  font-size: 220px;
+  line-height: 0.9;
+  margin-bottom: 24px;
+}
+
+.section h2 {
+  font-size: 200px;
+  margin-bottom: 0;
+}
+
+/* ── Reto ── */
+
+.reto {
+  border: 0 solid var(--accent);
+  border-left-width: 24px;
+}
+
+.reto h2 {
+  font-size: 96px;
+  margin-bottom: 56px;
+}
+
+.reto ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 42px;
+}
+
+.reto li {
+  padding-left: 1.4em;
+  margin-bottom: 0.5em;
+  position: relative;
+}
+
+.reto li::before {
+  content: '□';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.reto .path {
+  margin-top: 56px;
+  font-size: 34px;
+}
+
+/* ── Tarjetas ── */
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  background: var(--line);
+  border: 2px solid var(--line);
+}
+
+.cards.four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.cards.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cards li {
+  padding: 44px 40px 52px;
+  background: var(--bg);
+}
+
+.cards .n {
+  display: block;
+  font-size: 30px;
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.cards h3 {
+  margin-bottom: 20px;
+}
+
+.cards p {
+  font-size: 32px;
+  line-height: 1.35;
+}
+
+/* ── Pasos numerados ── */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  align-items: baseline;
+  padding-block: 22px;
+  border-top: 2px solid var(--line);
+}
+
+.steps .n {
+  font-family: var(--pixel);
+  font-size: 46px;
+  color: var(--accent);
+}
+
+.steps h3 {
+  font-size: 42px;
+  margin-bottom: 6px;
+}
+
+.steps p {
+  font-size: 32px;
+}
+
+/* ── Listas ── */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.list li {
+  position: relative;
+  padding-left: 1.3em;
+  margin-bottom: 0.45em;
+}
+
+.list li::before {
+  content: '▪';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.big-list {
+  font-size: 50px;
+  line-height: 1.3;
+}
+
+.big-list li {
+  margin-bottom: 0.7em;
+}
+
+pre + .list {
+  margin-top: 48px;
+  font-size: 34px;
+}
+
+/* ── Código ── */
+
+.slide pre {
+  padding: 34px 44px;
+  border-width: 2px;
+  border-radius: 12px;
+  font-size: 26px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+
+/* ── Agenda ── */
+
+.agenda {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 36px;
+}
+
+.agenda li {
+  display: grid;
+  grid-template-columns: 190px 1fr auto;
+  padding-block: 15px;
+  border-top: 2px solid var(--line);
+}
+
+.agenda .time {
+  font-family: var(--pixel);
+  font-variant-numeric: tabular-nums;
+}
+
+.agenda .min,
+.agenda .descanso {
+  color: var(--muted);
+}
+
+/* ── Diagrama cliente ⇄ servidor ── */
+
+.flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 48px;
+  margin-bottom: 48px;
+}
+
+.box {
+  padding: 36px 44px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+}
+
+.box.hl {
+  border-color: var(--accent);
+}
+
+.box p {
+  font-size: 32px;
+  margin-top: 12px;
+}
+
+.arrow {
+  display: grid;
+  justify-items: center;
+  font-size: 72px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.arrow span {
+  font-size: 24px;
+  color: var(--muted);
+}
+
+/* ── Columnas ── */
+
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+}
+
+.cols h3 {
+  margin-bottom: 28px;
+}
+
+.cols .box p + p {
+  margin-top: 28px;
+}
+
+/* ── Tablas ── */
+
+.slide table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 36px;
+}
+
+.slide th,
+.slide td {
+  text-align: left;
+  padding: 20px 32px 20px 0;
+  border-bottom: 2px solid var(--line);
+}
+
+.slide th {
+  font-family: var(--pixel);
+  font-weight: 500;
+  font-size: 44px;
+}
+
+.slide td:first-child {
+  color: var(--muted);
+}
+
+.when td {
+  font-size: 42px;
+  padding-block: 26px;
+}
+
+.when td:first-child {
+  color: var(--fg);
+}
+
+.when td:last-child {
+  font-family: var(--pixel);
+  font-size: 48px;
+  text-align: right;
+  padding-right: 0;
+  white-space: nowrap;
+}
+
+/* ── Enlaces ── */
+
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.links li {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  padding-block: 20px;
+  border-top: 2px solid var(--line);
+}
+
+.links code {
+  border: 0;
+  background: none;
+  color: var(--muted);
+}
+
+/* ── Barra inferior ── */
+
+.hud {
+  position: fixed;
+  inset: auto 0 0 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  padding: 1.2vh 2vw 1.6vh;
+  font-size: max(11px, 1.5vh);
+  color: #6b6b6b;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud[hidden] {
+  display: none;
+}
+
+.hud #counter {
+  text-align: right;
+}
+
+.progress {
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 3px;
+}
+
+#bar {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s;
+}
+
+/* ── Animaciones de entrada ──
+   Al pasar de display:none a flex, las animaciones se reinician,
+   así que se reproducen cada vez que la slide se activa. */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@keyframes from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-48px);
+  }
+}
+
+@keyframes from-right {
+  from {
+    opacity: 0;
+    transform: translateX(48px);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes light-up {
+  from {
+    border-color: var(--line);
+    box-shadow: 0 0 0 0 transparent;
+  }
+  60% {
+    box-shadow: 0 0 48px -8px var(--accent);
+  }
+  to {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.slide.active {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Diagrama: cliente por la izquierda, servidor por la derecha y la flecha en medio */
+.slide.active .flow > .box:first-child {
+  animation: from-left 0.6s var(--ease) both;
+}
+
+.slide.active .flow > .box:last-child {
+  animation: from-right 0.6s var(--ease) 0.1s both;
+}
+
+.slide.active .flow > .box.hl {
+  animation:
+    from-right 0.6s var(--ease) 0.1s both,
+    light-up 0.9s ease-out 0.55s both;
+}
+
+.slide.active .arrow {
+  animation: pop 0.45s var(--ease) 0.4s both;
+}
+
+/* Tarjetas, pasos y columnas: entran en cascada.
+   En las tarjetas se anima su contenido, no la celda: el fondo del
+   contenedor dibuja los bordes y se vería un bloque gris. */
+.slide.active :is(.cards, .steps, .cols) > :nth-child(1) { --d: 0.1s; }
+.slide.active :is(.cards, .steps, .cols) > :nth-child(2) { --d: 0.2s; }
+.slide.active :is(.cards, .steps, .cols) > :nth-child(3) { --d: 0.3s; }
+.slide.active :is(.cards, .steps, .cols) > :nth-child(4) { --d: 0.4s; }
+.slide.active :is(.cards, .steps, .cols) > :nth-child(5) { --d: 0.5s; }
+.slide.active :is(.cards, .steps, .cols) > :nth-child(6) { --d: 0.6s; }
+
+.slide.active .cards {
+  animation: fade 0.4s ease-out both;
+}
+
+.slide.active :is(.cards > * > *, .cols > *) {
+  animation: rise 0.55s var(--ease) var(--d, 0s) both;
+}
+
+.slide.active .steps > li {
+  animation: from-left 0.55s var(--ease) var(--d, 0s) both;
+}
+
+/* Bajo el diagrama, las tarjetas esperan a que termine */
+.slide.active .flow ~ .cards {
+  animation-delay: 0.6s;
+}
+
+.slide.active .flow ~ .cards > :nth-child(1) { --d: 0.7s; }
+.slide.active .flow ~ .cards > :nth-child(2) { --d: 0.8s; }
+.slide.active .flow ~ .cards > :nth-child(3) { --d: 0.9s; }
+.slide.active .flow ~ .cards > :nth-child(4) { --d: 1s; }
+
+/* El avatar aparece a saltos, como un sprite */
+.slide.active .avatar {
+  animation: pop 0.5s steps(5, end) 0.2s both;
+}
+
+/* La frase final aparece la última */
+.slide.active :is(.cards, .steps, .cols, .flow) ~ .foot {
+  animation: fade 0.8s ease-out 1.1s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide.active *,
+  .slide.active *::before,
+  .slide.active *::after {
+    animation: none !important;
+  }
+}

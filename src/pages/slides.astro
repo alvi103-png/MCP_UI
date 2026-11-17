@@ -1,0 +1,705 @@
+---
+import { Font } from 'astro:assets';
+import { Code } from 'astro:components';
+import Slide from '../components/Slide.astro';
+import { schedule } from '../data/agenda';
+import '../styles/global.css';
+import '../styles/slides.css';
+
+const theme = 'css-variables';
+const B1 = 'Bloque 1 · MCP UI';
+const B2 = 'Bloque 2 · WebMCP';
+const B3 = 'Bloque 3 · Jev';
+const B4 = 'Bloque 4 · IA local';
+
+const mcpBasic = `server.registerTool(
+  'ver_equipo',
+  {
+    description: 'Posición, últimos resultados y próximo partido de un equipo de LaLiga',
+    inputSchema: z.object({
+      equipo: z.string().describe('Nombre o apodo: "Barça", "Atleti"…'),
+    }),
+  },
+  async ({ equipo }) => {
+    const ficha = await verEquipo(equipo); // JavaScript normal: llama a la API
+    return {
+      content: [{ type: 'text', text: resumen(ficha) }], // texto para el modelo
+    };
+  },
+);`;
+
+const mcpServer = `registerAppTool(                 // antes: server.registerTool(
+  server,
+  'ver_equipo',
+  {
+    description: 'Posición, últimos resultados y próximo partido de un equipo de LaLiga',
+    inputSchema: z.object({ equipo: z.string() }),
+    _meta: { ui: { resourceUri: 'ui://laliga/vista.html' } },  // nuevo
+  },
+  async ({ equipo }) => {
+    const ficha = await verEquipo(equipo);
+    return {
+      content: [{ type: 'text', text: resumen(ficha) }], // para el modelo
+      structuredContent: { equipo: ficha },               // nuevo: para la vista
+    };
+  },
+);`;
+
+const mcpResource = `registerAppResource(
+  server,
+  'LaLiga',
+  'ui://laliga/vista.html',
+  {},
+  async () => ({
+    contents: [{
+      uri: 'ui://laliga/vista.html',
+      mimeType: RESOURCE_MIME_TYPE,   // text/html;profile=mcp-app
+      text: await crearVista(),       // un único HTML con su CSS y su JS
+      // el iframe solo carga lo que permitas: aquí, los escudos
+      _meta: { ui: { csp: { resourceDomains: ['https://a.espncdn.com'] } } },
+    }],
+  }),
+);`;
+
+const mcpView = `import { App } from '@modelcontextprotocol/ext-apps';
+const app = new App({ name: 'LaLiga', version: '1.0.0' });
+
+// cliente → vista: llega el resultado de la herramienta
+app.addEventListener('toolresult', ({ structuredContent }) => {
+  pintar(structuredContent); // la tabla, la jornada o la ficha
+});
+
+// vista → servidor: clic en un equipo, sin pasar por el modelo
+$tabla.addEventListener('click', async (evento) => {
+  const { equipo } = evento.target.closest('[data-equipo]').dataset;
+  const resultado = await app.callServerTool({ name: 'ver_equipo', arguments: { equipo } });
+  pintar(resultado.structuredContent);
+});
+
+await app.connect();`;
+
+const webmcpTool = `await document.modelContext.registerTool({
+  name: 'anadir_al_carrito',
+  description: 'Añade un producto al carrito. Devuelve el carrito y el total en euros.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'Identificador del producto' },
+      cantidad: { type: 'integer', minimum: 1 },
+    },
+    required: ['id'],
+  },
+  execute({ id, cantidad = 1 }) {
+    return añadirAlCarrito(id, cantidad);
+  },
+});`;
+
+const webmcpForm = `<form
+  toolname="suscribir_ofertas"
+  tooldescription="Suscribe un correo a los avisos de ofertas de una categoría"
+>
+  <input type="email" name="email" required
+         toolparamdescription="Correo electrónico del usuario" />
+
+  <select name="categoria" required>…</select>
+
+  <button>Avísame</button>
+</form>`;
+
+const webmcpHints = `annotations: {
+  readOnlyHint: true,           // solo lee, no cambia nada
+  untrustedContentHint: true,   // devuelve texto de terceros (reseñas)
+  consequentialHint: true,      // difícil de deshacer: pide confirmación
+}`;
+
+const jevRequest = `const respuesta = await fetch(\`\${API_URL}/api/jev\`, {
+  method: 'POST',
+  headers: { Authorization: \`Bearer \${TOKEN}\`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    state: { reseña: 'Llegó tarde y la caja estaba rota. No vuelvo a comprar.' },
+    questions: {
+      tema:    { type: 'choice', instructions: '¿De qué trata?',
+                 criteria: { producto: null, envio: null, otro: null } },
+      nota:    { type: 'score',  instructions: '¿Qué valoración le da?',
+                 criteria: ['Mala', 'Regular', 'Buena'] },
+      urgente: { type: 'noul',   instructions: '¿Hay que responder hoy?' },
+    },
+  }),
+});`;
+
+const jevResponse = `{
+  "answers": {
+    "tema":    { "choice": "envio", "confidence": 0.97,
+                 "probabilities": { "producto": 0.02, "envio": 0.97, "otro": 0.01 } },
+    "nota":    { "score": 0.1, "confidence": 0.9 },
+    "urgente": { "noul": 0.84 }
+  },
+  "usage": { "input_tokens": 212, "output_tokens": 30 }
+}`;
+
+const jevCode = `const { answers } = await respuesta.json();
+
+if (answers.urgente.noul > 0.8) avisarAlEquipo();
+
+if (answers.tema.choice === 'envio') abrirIncidencia('logística');
+
+estrellas = Math.round(answers.nota.score) + 1;`;
+
+const localSummarizer = `if ((await Summarizer.availability()) !== 'unavailable') {
+  const summarizer = await Summarizer.create({
+    type: 'tldr',
+    length: 'short',
+    outputLanguage: 'es',
+    monitor(m) {
+      m.addEventListener('downloadprogress', (e) => progreso(e.loaded));
+    },
+  });
+
+  for await (const trozo of summarizer.summarizeStreaming(reseñas)) {
+    pintar(trozo);
+  }
+}`;
+
+const localPrompt = `const sesion = await LanguageModel.create({
+  initialPrompts: [{ role: 'system', content: 'Analizas reseñas de una tienda.' }],
+});
+
+const respuesta = await sesion.prompt(reseñas, {
+  responseConstraint: {
+    type: 'object',
+    properties: {
+      pros: { type: 'array', items: { type: 'string' } },
+      contras: { type: 'array', items: { type: 'string' } },
+    },
+  },
+});
+
+const { pros, contras } = JSON.parse(respuesta);`;
+
+const localWebgpu = `import { pipeline } from '@huggingface/transformers';
+
+const generador = await pipeline(
+  'text-generation',
+  'onnx-community/gemma-3-270m-it-ONNX',
+  {
+    device: navigator.gpu ? 'webgpu' : 'wasm',
+    dtype: 'q4',                       // 320 MB que descarga el usuario
+    progress_callback: mostrarProgreso,
+  },
+);
+
+const salida = await generador(mensajes, { max_new_tokens: 120 });`;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* Lo primero del <head>: los preload de las fuentes arrancan antes que nada */}
+    <Font cssVariable="--font-pixel" preload />
+    <Font cssVariable="--font-mono" preload />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Slides · Webs listas con la IA</title>
+  </head>
+  <body>
+    <main id="deck" class="deck" aria-live="polite">
+      <!-- ─────────────── Apertura ─────────────── -->
+      <Slide
+        kind="image"
+        src="/slides/portada.png"
+        alt="Upskilling Week Barcelona. 15:00 – 18:00. Midudev. Webs listas con la IA: MCP UI, WebMCP, Jev e IA local en el navegador."
+      />
+
+      <Slide kind="statement">
+        <div class="intro">
+          <div>
+            <p class="big">Hola, soy <span class="accent">midudev</span></p>
+            <p class="sub">Miguel Ángel Durán · Desarrollador de software y divulgador de programación</p>
+          </div>
+          <img class="avatar" src="/slides/midudev-pixel.png" alt="Retrato de midudev en pixel art" width="64" height="64" />
+        </div>
+      </Slide>
+
+      <Slide kind="statement">
+        <p class="big">Los agentes de IA ya no solo conversan.</p>
+        <p class="big"><span class="accent">Navegan</span>, usan <span class="accent">herramientas</span> y <span class="accent">actúan</span> en nombre del usuario.</p>
+      </Slide>
+
+      <Slide kind="statement">
+        <p class="big">¿Está tu web preparada para un usuario que no es una persona?</p>
+      </Slide>
+
+      <Slide title="Hoy construimos una tienda… para agentes">
+        <ol class="cards four">
+          <li><span class="n">01</span><h3>MCP UI</h3><p>El catálogo, como interfaz dentro del chat</p></li>
+          <li><span class="n">02</span><h3>WebMCP</h3><p>La web expone herramientas a los agentes del navegador</p></li>
+          <li><span class="n">03</span><h3>Jev</h3><p>Decisiones rápidas que el código usa tal cual</p></li>
+          <li><span class="n">04</span><h3>IA local</h3><p>Modelos que se ejecutan en el navegador</p></li>
+        </ol>
+        <p class="foot">Explicación → código en directo → reto guiado. Así cuatro veces.</p>
+      </Slide>
+
+      <Slide title="Agenda">
+        <ol class="agenda">
+          {
+            schedule.map((item) => (
+              <li class={item.kind}>
+                <span class="time">{item.start}</span>
+                <span class="what">
+                  {item.block && <span class="accent">{item.block} · </span>}
+                  {item.title}
+                </span>
+                <span class="min">{item.minutes} min</span>
+              </li>
+            ))
+          }
+        </ol>
+      </Slide>
+
+      <Slide title="Antes de empezar">
+        <ol class="steps">
+          <li><span class="n">1</span><div><h3>Clona el repositorio</h3><p><code>git clone … && cd taller</code></p></div></li>
+          <li><span class="n">2</span><div><h3>Abre la web del taller</h3><p>Agenda, retos y documentación de las APIs</p></div></li>
+          <li><span class="n">3</span><div><h3>Apunta el token</h3><p>Una sola clave para Jev y OpenAI. Caduca al terminar.</p></div></li>
+          <li><span class="n">4</span><div><h3>Comprueba</h3><p>Chrome actualizado · Node.js 22+ · <code>node -v</code></p></div></li>
+        </ol>
+      </Slide>
+
+      <!-- ─────────────── Bloque 1 · MCP UI ─────────────── -->
+      <Slide kind="section" label="Bloque 1 · 15:10">
+        <p class="num">01</p>
+        <h2>MCP UI</h2>
+        <p class="sub">Interfaces interactivas dentro del chat</p>
+      </Slide>
+
+      <Slide label={B1} title="MCP en un minuto">
+        <div class="flow">
+          <div class="box"><h3>Cliente</h3><p>Claude, ChatGPT, VS Code…</p></div>
+          <div class="arrow">⇄<span>JSON-RPC</span></div>
+          <div class="box hl"><h3>Servidor MCP</h3><p>Tu código</p></div>
+        </div>
+        <ul class="cards three">
+          <li><h3>Tools</h3><p>Acciones que el modelo puede ejecutar</p></li>
+          <li><h3>Resources</h3><p>Datos que el cliente puede leer</p></li>
+          <li><h3>Prompts</h3><p>Plantillas que elige el usuario</p></li>
+        </ul>
+        <p class="foot">Un estándar abierto: escribes el servidor una vez y funciona en cualquier cliente.</p>
+      </Slide>
+
+      <Slide label={B1} title="Un servidor MCP: una herramienta">
+        <Code code={mcpBasic} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B1} title="En directo: LaLiga por MCP">
+        <ol class="steps">
+          <li><span class="n">1</span><div><h3>Tres herramientas</h3><p><code>ver_clasificacion</code> · <code>ver_resultados</code> · <code>ver_equipo</code></p></div></li>
+          <li><span class="n">2</span><div><h3>Datos reales</h3><p>La API pública de ESPN, sin clave</p></div></li>
+          <li><span class="n">3</span><div><h3>Lo conectamos al chat</h3><p>«¿Cómo le fue al Barça en el último partido?»</p></div></li>
+        </ol>
+        <p class="foot">directo/liga/1-mcp</p>
+      </Slide>
+
+      <Slide kind="statement" label={B1}>
+        <p class="big">El problema: una herramienta solo devuelve <span class="accent">texto</span>.</p>
+        <p class="sub">Veinte equipos en una tabla de markdown. Sin escudos, sin colores, sin poder tocar nada.</p>
+      </Slide>
+
+      <Slide label={B1} title="MCP Apps: la herramienta trae su interfaz">
+        <ol class="steps">
+          <li><span class="n">1</span><div><h3>La herramienta declara una vista</h3><p><code>_meta.ui.resourceUri = "ui://laliga/vista.html"</code></p></div></li>
+          <li><span class="n">2</span><div><h3>El modelo llama a la herramienta</h3><p>Texto para el modelo, datos para la vista</p></div></li>
+          <li><span class="n">3</span><div><h3>El cliente pinta el HTML</h3><p>En un iframe aislado, dentro de la conversación</p></div></li>
+          <li><span class="n">4</span><div><h3>Hablan en los dos sentidos</h3><p>La vista recibe resultados y puede llamar a otras herramientas</p></div></li>
+        </ol>
+      </Slide>
+
+      <Slide label={B1} title="Servidor: una herramienta con interfaz">
+        <Code code={mcpServer} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B1} title="Servidor: el recurso <span class='accent'>ui://</span>">
+        <Code code={mcpResource} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B1} title="Vista: el JavaScript del iframe">
+        <Code code={mcpView} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B1} title="En directo: LaLiga con interfaz">
+        <ol class="steps">
+          <li><span class="n">1</span><div><h3>Las mismas herramientas</h3><p><code>registerAppTool</code> + <code>ui://laliga/vista.html</code></p></div></li>
+          <li><span class="n">2</span><div><h3>Datos para la vista</h3><p>Tabla, resultados y ficha de equipo con escudos</p></div></li>
+          <li><span class="n">3</span><div><h3>La vista llama al servidor</h3><p>Clic en un equipo → <code>ver_equipo</code>, sin pasar por el modelo</p></div></li>
+        </ol>
+        <p class="foot">directo/liga/2-mcp-ui</p>
+      </Slide>
+
+      <Slide kind="reto" label={B1}>
+        <p class="num">Reto 1</p>
+        <h2>El catálogo dentro del chat</h2>
+        <ul>
+          <li>Convierte <code>buscar_productos</code> en una herramienta con interfaz</li>
+          <li>Registra el recurso <code>ui://</code></li>
+          <li>Haz que el botón «Añadir» llame al servidor</li>
+        </ul>
+        <p class="path">retos/01-mcp-ui/inicio · 18 min</p>
+      </Slide>
+
+      <!-- ─────────────── Bloque 2 · WebMCP ─────────────── -->
+      <Slide kind="section" label="Bloque 2 · 15:50">
+        <p class="num">02</p>
+        <h2>WebMCP</h2>
+        <p class="sub">Tu web, como herramientas para los agentes del navegador</p>
+      </Slide>
+
+      <Slide label={B2} title="Así usa hoy tu web un agente">
+        <ol class="steps">
+          <li><span class="n">1</span><div><h3>Hace una captura o lee el DOM</h3><p>Miles de tokens por cada paso</p></div></li>
+          <li><span class="n">2</span><div><h3>Adivina qué botón pulsar</h3><p>«¿Será este icono el carrito?»</p></div></li>
+          <li><span class="n">3</span><div><h3>Simula un clic y vuelve a mirar</h3><p>Lento, caro y frágil</p></div></li>
+        </ol>
+        <p class="foot">Cambias un <code>div</code> de sitio y el agente se pierde.</p>
+      </Slide>
+
+      <Slide kind="statement" label={B2}>
+        <p class="big">WebMCP: la web <span class="accent">le dice</span> al agente qué puede hacer.</p>
+        <p class="sub">Tu página registra herramientas con <code>document.modelContext</code>. El agente las llama: sin leer la pantalla, sin simular clics.</p>
+      </Slide>
+
+      <Slide label={B2} title="MCP y WebMCP no compiten">
+        <table>
+          <thead><tr><th></th><th>MCP</th><th>WebMCP</th></tr></thead>
+          <tbody>
+            <tr><td>Dónde vive</td><td>En un servidor</td><td>En la página, en el navegador</td></tr>
+            <tr><td>Quién lo usa</td><td>Asistentes de chat e IDE</td><td>Agentes del navegador</td></tr>
+            <tr><td>Sesión</td><td>La gestionas tú (OAuth…)</td><td>La del usuario: ya ha iniciado sesión</td></tr>
+            <tr><td>Interfaz</td><td>La del chat (MCP Apps)</td><td>Tu web, a la vista del usuario</td></tr>
+          </tbody>
+        </table>
+      </Slide>
+
+      <Slide label={B2} title="API imperativa: <span class='accent'>registerTool</span>">
+        <Code code={webmcpTool} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B2} title="API declarativa: un formulario es una herramienta">
+        <Code code={webmcpForm} lang="html" theme={theme} />
+        <p class="foot">El agente rellena, el usuario confirma. Con <code>toolautosubmit</code> se envía solo.</p>
+      </Slide>
+
+      <Slide label={B2} title="Pistas para el agente y para el navegador">
+        <Code code={webmcpHints} lang="js" theme={theme} />
+        <ul class="list">
+          <li>Descripciones claras: qué hace, qué devuelve y en qué unidades</li>
+          <li>Devuelve datos, no HTML. Los errores, como valor</li>
+          <li>Que el usuario vea en pantalla lo que hace el agente</li>
+        </ul>
+      </Slide>
+
+      <Slide label={B2} title="Estado actual">
+        <ul class="cards three">
+          <li><h3>Origin trial</h3><p>En Chrome y Edge. Todavía no es estable.</p></li>
+          <li><h3>En local</h3><p><code>chrome://flags/</code><br /><code>#enable-webmcp-testing</code></p></li>
+          <li><h3>Para probar</h3><p>DevTools → Application → WebMCP</p></li>
+        </ul>
+        <p class="foot">Es una mejora progresiva: si el navegador no lo tiene, tu web funciona igual.</p>
+      </Slide>
+
+      <Slide kind="reto" label={B2}>
+        <p class="num">Reto 2</p>
+        <h2>La tienda se abre a los agentes</h2>
+        <ul>
+          <li>Registra <code>buscar_productos</code>, <code>anadir_al_carrito</code>, <code>ver_producto</code> y <code>vaciar_carrito</code></li>
+          <li>Añade las anotaciones que tocan</li>
+          <li>Convierte el formulario de ofertas en una herramienta</li>
+        </ul>
+        <p class="path">retos/02-webmcp/inicio · 17 min</p>
+      </Slide>
+
+      <Slide kind="statement">
+        <p class="num">16:25</p>
+        <p class="big">Descanso</p>
+        <p class="sub">10 minutos. Volvemos a las 16:35.</p>
+      </Slide>
+
+      <!-- ─────────────── Bloque 3 · Jev ─────────────── -->
+      <Slide kind="section" label="Bloque 3 · 16:35">
+        <p class="num">03</p>
+        <h2>Jev</h2>
+        <p class="sub">Decisiones rápidas y estructuradas</p>
+      </Slide>
+
+      <Slide label={B3} title="No siempre quieres que el modelo escriba">
+        <ul class="list big-list">
+          <li>¿Esta reseña es spam?</li>
+          <li>¿A qué equipo va este ticket?</li>
+          <li>¿Cuánto encaja este producto con lo que busca el cliente?</li>
+        </ul>
+        <p class="foot">Con un modelo generativo: «responde solo con JSON»… esperar, parsear y cruzar los dedos.</p>
+      </Slide>
+
+      <Slide label={B3} title="Jev responde preguntas, no escribe texto">
+        <ul class="cards three">
+          <li><span class="n">choice</span><h3>Elegir</h3><p>Una opción entre varias, con la probabilidad de cada una</p></li>
+          <li><span class="n">score</span><h3>Puntuar</h3><p>Una posición en una escala que tú defines</p></li>
+          <li><span class="n">noul</span><h3>Sí o no</h3><p>La probabilidad de «sí», de 0 a 1</p></li>
+        </ul>
+        <p class="foot">Un contenido (<code>state</code>) + varias preguntas (<code>questions</code>) = una sola llamada.</p>
+      </Slide>
+
+      <Slide label={B3} title="La petición">
+        <Code code={jevRequest} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B3} title="La respuesta">
+        <Code code={jevResponse} lang="json" theme={theme} />
+      </Slide>
+
+      <Slide label={B3} title="El código decide con números">
+        <Code code={jevCode} lang="js" theme={theme} />
+        <p class="foot">Tú eliges el umbral según lo que cueste equivocarse.</p>
+      </Slide>
+
+      <Slide label={B3} title="Cuándo usarlo">
+        <div class="cols">
+          <div>
+            <h3 class="accent">Sí</h3>
+            <ul class="list">
+              <li>Clasificar y enrutar</li>
+              <li>Moderar contenido</li>
+              <li>Ordenar y recomendar</li>
+              <li>Validar antes de actuar</li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="muted">No</h3>
+            <ul class="list">
+              <li>Redactar texto</li>
+              <li>Conversar</li>
+              <li>Razonar en varios pasos</li>
+            </ul>
+          </div>
+        </div>
+      </Slide>
+
+      <Slide kind="reto" label={B3}>
+        <p class="num">Reto 3</p>
+        <h2>Una tienda que decide</h2>
+        <ul>
+          <li>Búsqueda inteligente: una pregunta <code>score</code> por producto</li>
+          <li>Moderación de reseñas con <code>noul</code>, <code>choice</code> y <code>score</code></li>
+          <li>Extra: exponla como herramienta WebMCP</li>
+        </ul>
+        <p class="path">retos/03-jev/inicio · 15 min</p>
+      </Slide>
+
+      <!-- ─────────────── Bloque 4 · IA local ─────────────── -->
+      <Slide kind="section" label="Bloque 4 · 17:05">
+        <p class="num">04</p>
+        <h2>IA en local</h2>
+        <p class="sub">El modelo se ejecuta en el navegador</p>
+      </Slide>
+
+      <Slide label={B4} title="¿Por qué en local?">
+        <ul class="cards three">
+          <li><h3>Privacidad</h3><p>Los datos no salen del dispositivo</p></li>
+          <li><h3>Coste</h3><p>Cero por petición. Sin API key.</p></li>
+          <li><h3>Sin conexión</h3><p>Funciona en un avión</p></li>
+        </ul>
+      </Slide>
+
+      <Slide label={B4} title="Dos caminos">
+        <div class="cols">
+          <div class="box">
+            <h3>APIs integradas de Chrome</h3>
+            <p>Gemini Nano dentro del navegador. Chrome descarga y gestiona el modelo.</p>
+            <p class="muted">Summarizer · Prompt · Translator · Language Detector</p>
+          </div>
+          <div class="box">
+            <h3>WebGPU + Transformers.js</h3>
+            <p>Tú eliges el modelo. Se ejecuta en la GPU del usuario.</p>
+            <p class="muted">Cualquier modelo ONNX de Hugging Face</p>
+          </div>
+        </div>
+      </Slide>
+
+      <Slide label={B4} title="Summarizer API">
+        <Code code={localSummarizer} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B4} title="Prompt API: JSON garantizado">
+        <Code code={localPrompt} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B4} title="Plan B: WebGPU">
+        <Code code={localWebgpu} lang="js" theme={theme} />
+      </Slide>
+
+      <Slide label={B4} title="Las limitaciones">
+        <ul class="list big-list">
+          <li>Solo Chrome de escritorio, y con hardware: 22 GB de disco, GPU con 4 GB</li>
+          <li>La primera vez hay que descargar el modelo</li>
+          <li>Modelos pequeños: tareas acotadas, no razonamiento</li>
+          <li>Siempre necesitas un plan B</li>
+        </ul>
+      </Slide>
+
+      <Slide label={B4} title="¿Local o nube?">
+        <table>
+          <thead><tr><th></th><th>Local</th><th>Nube</th></tr></thead>
+          <tbody>
+            <tr><td>Privacidad</td><td>No sale del dispositivo</td><td>Viaja a un tercero</td></tr>
+            <tr><td>Coste</td><td>Cero por petición</td><td>Por token</td></tr>
+            <tr><td>Calidad</td><td>Tareas acotadas</td><td>Los mejores modelos</td></tr>
+            <tr><td>Primera vez</td><td>Descarga del modelo</td><td>Inmediato</td></tr>
+            <tr><td>Compatibilidad</td><td>Depende del dispositivo</td><td>Cualquiera</td></tr>
+          </tbody>
+        </table>
+      </Slide>
+
+      <Slide kind="reto" label={B4}>
+        <p class="num">Reto 4</p>
+        <h2>Reseñas resumidas sin salir del navegador</h2>
+        <ul>
+          <li>Comprueba la disponibilidad de <code>Summarizer</code></li>
+          <li>Resume en streaming, con progreso de descarga</li>
+          <li>Extra: pros y contras en JSON con la Prompt API</li>
+        </ul>
+        <p class="path">retos/04-ia-local/inicio · 17 min</p>
+      </Slide>
+
+      <!-- ─────────────── Cierre ─────────────── -->
+      <Slide title="Las cuatro piezas, juntas">
+        <ol class="cards four">
+          <li><span class="n">01</span><h3>MCP UI</h3><p>El catálogo aparece en el chat del asistente</p></li>
+          <li><span class="n">02</span><h3>WebMCP</h3><p>El agente del navegador busca y llena el carrito</p></li>
+          <li><span class="n">03</span><h3>Jev</h3><p>La tienda recomienda y modera en milisegundos</p></li>
+          <li><span class="n">04</span><h3>IA local</h3><p>Las reseñas se resumen en el dispositivo</p></li>
+        </ol>
+        <p class="foot">Una misma tienda, lista para personas y para agentes.</p>
+      </Slide>
+
+      <Slide title="¿Cuándo uso cada una?">
+        <table class="when">
+          <tbody>
+            <tr><td>Quiero estar dentro de ChatGPT, Claude o el IDE</td><td class="accent">MCP UI</td></tr>
+            <tr><td>Quiero que los agentes usen bien mi web</td><td class="accent">WebMCP</td></tr>
+            <tr><td>Mi código necesita una decisión, no un texto</td><td class="accent">Jev</td></tr>
+            <tr><td>Datos sensibles, tareas pequeñas, sin coste</td><td class="accent">IA local</td></tr>
+            <tr><td>Razonar, redactar, mucho contexto</td><td class="muted">Un LLM en la nube</td></tr>
+          </tbody>
+        </table>
+      </Slide>
+
+      <Slide title="Para seguir">
+        <ul class="links">
+          <li><span>MCP Apps</span><code>modelcontextprotocol.io</code></li>
+          <li><span>WebMCP</span><code>developer.chrome.com/docs/ai/webmcp</code></li>
+          <li><span>Jev</span><code>docs.typesafe.ai</code></li>
+          <li><span>IA integrada</span><code>developer.chrome.com/docs/ai/built-in</code></li>
+          <li><span>Transformers.js</span><code>huggingface.co/docs/transformers.js</code></li>
+        </ul>
+        <p class="foot">El repositorio y esta web se quedan contigo.</p>
+      </Slide>
+
+      <Slide kind="statement">
+        <p class="big">¿Preguntas?</p>
+        <p class="sub"><span class="accent">@midudev</span> · midu.dev</p>
+      </Slide>
+
+      <Slide
+        kind="image"
+        src="/slides/feedback.png"
+        alt="Thanks for coming! Please leave your feedback here. It will take no more than 5 minutes. Código QR de la encuesta."
+      />
+    </main>
+
+    <footer class="hud" aria-hidden="true">
+      <span id="clock"></span>
+      <span id="section"></span>
+      <span id="counter"></span>
+    </footer>
+    <div class="progress" aria-hidden="true"><div id="bar"></div></div>
+
+    <script>
+      const deck = document.querySelector<HTMLElement>('#deck')!;
+      const slides = [...deck.querySelectorAll<HTMLElement>('.slide')];
+      const counter = document.querySelector('#counter')!;
+      const section = document.querySelector('#section')!;
+      const clock = document.querySelector('#clock')!;
+      const bar = document.querySelector<HTMLElement>('#bar')!;
+      const hud = document.querySelector<HTMLElement>('.hud')!;
+
+      let current = 0;
+
+      function show(index: number) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('active', i === current));
+
+        const slide = slides[current];
+        counter.textContent = `${current + 1} / ${slides.length}`;
+        section.textContent = slide.dataset.label ?? '';
+        bar.style.width = `${((current + 1) / slides.length) * 100}%`;
+        // Las imágenes a pantalla completa se muestran limpias
+        hud.hidden = slide.classList.contains('image');
+        history.replaceState(null, '', `#${current + 1}`);
+      }
+
+      // El escenario mide siempre 1920×1080 y se escala a la ventana
+      function fit() {
+        const scale = Math.min(innerWidth / 1920, innerHeight / 1080);
+        deck.style.transform = `translate(-50%, -50%) scale(${scale})`;
+      }
+
+      function tick() {
+        clock.textContent = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      }
+
+      addEventListener('keydown', (event) => {
+        if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+        switch (event.key) {
+          case 'ArrowRight':
+          case 'ArrowDown':
+          case 'PageDown':
+          case ' ':
+          case 'Enter':
+            event.preventDefault();
+            show(current + 1);
+            break;
+          case 'ArrowLeft':
+          case 'ArrowUp':
+          case 'PageUp':
+          case 'Backspace':
+            event.preventDefault();
+            show(current - 1);
+            break;
+          case 'Home':
+            show(0);
+            break;
+          case 'End':
+            show(slides.length - 1);
+            break;
+          case 'f':
+            document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+            break;
+        }
+      });
+
+      // Clic en la mitad derecha: siguiente. En la izquierda: anterior
+      addEventListener('click', (event) => {
+        if (getSelection()?.toString()) return;
+        show(current + (event.clientX > innerWidth / 2 ? 1 : -1));
+      });
+
+      addEventListener('resize', fit);
+      addEventListener('hashchange', () => show(Number(location.hash.slice(1)) - 1 || 0));
+
+      fit();
+      tick();
+      setInterval(tick, 10_000);
+      show(Number(location.hash.slice(1)) - 1 || 0);
+    </script>
+  </body>
+</html>
