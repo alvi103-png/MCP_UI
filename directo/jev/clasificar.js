@@ -8,31 +8,31 @@ const API_JEV = '/api/jev';
 
 // ─── PASO 1 · Una pregunta: ¿de qué trata el mensaje? ──────────────────────────────
 // Jev no escribe texto: elige una de las opciones (choice) y da la probabilidad de cada una.
-const preguntas = {
-  tema: {
-    type: 'choice',
-    instructions: '¿De qué trata el mensaje del cliente?',
-    criteria: {
-      envio: 'Dónde está el pedido, retrasos o transporte',
-      devolucion: 'Devolver o cambiar un producto',
-      pago: 'Cobros, facturas o reembolsos',
-      producto: 'Dudas sobre un producto',
-      spam: 'Publicidad o nada que ver con la tienda',
-    },
-  },
-};
-
-export async function clasificar(mensaje) {
-  const respuesta = await fetch(API_JEV, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ state: mensaje, questions: preguntas }),
-  });
-
-  const datos = await respuesta.json();
-  if (!respuesta.ok) throw new Error(datos.error?.message ?? `Jev ha respondido ${respuesta.status}`);
-  return datos.answers;
-}
+// const preguntas = {
+//   tema: {
+//     type: 'choice',
+//     instructions: '¿De qué trata el mensaje del cliente?',
+//     criteria: {
+//       envio: 'Dónde está el pedido, retrasos o transporte',
+//       devolucion: 'Devolver o cambiar un producto',
+//       pago: 'Cobros, facturas o reembolsos',
+//       producto: 'Dudas sobre un producto',
+//       spam: 'Publicidad o nada que ver con la tienda',
+//     },
+//   },
+// };
+//
+// export async function clasificar(mensaje) {
+//   const respuesta = await fetch(API_JEV, {
+//     method: 'POST',
+//     headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+//     body: JSON.stringify({ state: mensaje, questions: preguntas }),
+//   });
+//
+//   const datos = await respuesta.json();
+//   if (!respuesta.ok) throw new Error(datos.error?.message ?? `Jev ha respondido ${respuesta.status}`);
+//   return datos.answers;
+// }
 
 // ─── PASO 2 · Más preguntas en la misma llamada ────────────────────────────────────
 // Sí o no (noul: la probabilidad de «sí») y una escala (score: la media ponderada de los niveles).

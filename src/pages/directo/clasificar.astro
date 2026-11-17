@@ -2,7 +2,12 @@
 // La demo en directo de Jev. El código que se descomenta está en directo/jev/clasificar.js;
 // esta página solo pinta lo que devuelva.
 import { TOKEN_DEL_TALLER } from '../../data/taller';
+import PixelIcon from '../../components/PixelIcon.astro';
+import type { IconName } from '../../components/pixel-icons';
 import Base from '../../layouts/Base.astro';
+
+// Iconos de las respuestas: se pintan aquí y el script los clona
+const iconos: IconName[] = ['camion', 'arrows', 'coin', 'cart', 'warning', 'check', 'cross', 'cara-feliz', 'cara-seria', 'cara-enfadada', 'question'];
 
 const ejemplos = [
   'El pedido llegó tarde y la caja estaba rota.',
@@ -31,6 +36,14 @@ const ejemplos = [
 
   <p id="decision" class="decision" hidden></p>
   <div id="respuestas" aria-live="polite"></div>
+
+  {
+    iconos.map((nombre) => (
+      <template data-icono={nombre}>
+        <PixelIcon name={nombre} size={44} />
+      </template>
+    ))
+  }
 </Base>
 
 <style>
@@ -130,42 +143,38 @@ const ejemplos = [
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.3rem;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.75rem;
   }
 
   #respuestas :global(li) {
     display: grid;
-    grid-template-columns: 9rem 1fr 3.5rem;
-    gap: 1rem;
-    align-items: center;
-    font-size: 0.87rem;
+    justify-items: center;
+    gap: 0.5rem;
+    padding: 1.1rem 0.75rem 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: 0.82rem;
     color: var(--muted);
+    opacity: 0.45;
   }
 
   #respuestas :global(li.elegida) {
+    border-color: var(--accent);
     color: var(--fg);
-  }
-
-  #respuestas :global(.barra) {
-    height: 0.5rem;
-    background: var(--surface);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  #respuestas :global(.barra > div) {
-    height: 100%;
-    background: var(--line);
-    transition: width 0.4s steps(8, end);
-  }
-
-  #respuestas :global(li.elegida .barra > div) {
-    background: var(--accent);
+    opacity: 1;
   }
 
   #respuestas :global(.porcentaje) {
-    text-align: right;
+    font-family: var(--pixel);
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--fg);
     font-variant-numeric: tabular-nums;
+  }
+
+  #respuestas :global(li.elegida .porcentaje) {
+    color: var(--accent);
   }
 
   .error {
@@ -210,27 +219,53 @@ const ejemplos = [
 
   const porcentaje = (valor: number) => `${Math.round(valor * 100)} %`;
 
-  function fila(nombre: string, probabilidad: number, elegida: boolean) {
-    const $barra = h('div', { className: 'barra' }, h('div', { style: `width: ${probabilidad * 100}%` }));
-    return h('li', { className: elegida ? 'elegida' : '' }, nombre, $barra, h('span', { className: 'porcentaje' }, porcentaje(probabilidad)));
+  // Icono de cada opción (por su clave o su texto). Si no está, una interrogación
+  const ICONOS: Record<string, string> = {
+    envio: 'camion',
+    devolucion: 'arrows',
+    pago: 'coin',
+    producto: 'cart',
+    spam: 'warning',
+    sí: 'check',
+    no: 'cross',
+    Nada: 'cara-feliz',
+    'Algo molesto': 'cara-seria',
+    'Muy enfadado': 'cara-enfadada',
+  };
+
+  function icono(opcion: string) {
+    const $plantilla =
+      document.querySelector<HTMLTemplateElement>(`template[data-icono="${ICONOS[opcion] ?? 'question'}"]`) ??
+      document.querySelector<HTMLTemplateElement>('template[data-icono="question"]')!;
+    return $plantilla.content.firstElementChild!.cloneNode(true);
   }
 
-  /** choice: una barra por opción. noul: la probabilidad de «sí». score: una barra por nivel y la media */
+  function tarjeta(nombre: string, probabilidad: number, elegida: boolean) {
+    return h(
+      'li',
+      { className: elegida ? 'elegida' : '' },
+      icono(nombre),
+      h('span', {}, nombre),
+      h('span', { className: 'porcentaje' }, porcentaje(probabilidad)),
+    );
+  }
+
+  /** choice: una tarjeta por opción. noul: sí y no. score: una tarjeta por nivel y la media */
   function pintar(nombre: string, respuesta: Respuesta) {
     let valor = '';
-    let filas: HTMLElement[] = [];
+    let tarjetas: HTMLElement[] = [];
 
     if (respuesta.type === 'choice') {
       valor = respuesta.choice!;
-      filas = Object.entries(respuesta.probabilities ?? {}).map(([opcion, p]) => fila(opcion, p, opcion === respuesta.choice));
+      tarjetas = Object.entries(respuesta.probabilities ?? {}).map(([opcion, p]) => tarjeta(opcion, p, opcion === respuesta.choice));
     } else if (respuesta.type === 'noul') {
       valor = porcentaje(respuesta.noul!);
-      filas = [fila('sí', respuesta.noul!, respuesta.noul! > 0.5)];
+      tarjetas = [tarjeta('sí', respuesta.noul!, respuesta.noul! > 0.5), tarjeta('no', 1 - respuesta.noul!, respuesta.noul! <= 0.5)];
     } else {
       valor = respuesta.score!.toFixed(1);
       const elegido = String(Math.round(respuesta.score!));
-      filas = Object.entries(respuesta.probabilities ?? {}).map(([nivel, p]) =>
-        fila(respuesta.legend?.[nivel] ?? nivel, p, nivel === elegido),
+      tarjetas = Object.entries(respuesta.probabilities ?? {}).map(([nivel, p]) =>
+        tarjeta(respuesta.legend?.[nivel] ?? nivel, p, nivel === elegido),
       );
     }
 
@@ -238,7 +273,7 @@ const ejemplos = [
       'section',
       {},
       h('h2', {}, h('code', {}, nombre), h('span', { className: 'muted' }, respuesta.type), h('strong', { className: 'accent' }, valor)),
-      h('ul', {}, ...filas),
+      h('ul', {}, ...tarjetas),
     );
   }
 
