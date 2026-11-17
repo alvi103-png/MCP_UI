@@ -3,6 +3,7 @@ import { createReadStream, existsSync } from 'node:fs';
 import path from 'node:path';
 import { defineConfig, fontProviders } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import react from '@astrojs/react';
 
 // Fuentes subseteadas con `pnpm fonts` (scripts/subset-fonts.sh). Astro las sirve con hash en
 // /_astro/fonts/ (caché inmutable), inyecta el @font-face en línea y genera fallbacks con métricas
@@ -35,9 +36,9 @@ function romDeMario() {
   };
 }
 
-// El worker de Whisper (voz del Camp Nou) empaqueta onnxruntime-web, cuyo wasm de respaldo
-// (25,6 MiB) supera el límite de archivos de Workers. Transformers.js lo carga siempre desde
-// jsDelivr, así que esa copia no se usa: se quita del build.
+// Transformers.js (los workers de Whisper y del chat local, y los módulos de runonweb) empaqueta
+// onnxruntime-web, cuyo wasm de respaldo (25,6 MiB) supera el límite de archivos de Workers.
+// Transformers.js y runonweb lo cargan siempre desde jsDelivr, así que esa copia no se usa: se quita del build.
 function sinWasmDeOnnx() {
   return {
     name: 'sin-wasm-de-onnx',
@@ -86,12 +87,25 @@ export default defineConfig({
   markdown: {
     shikiConfig: { theme: 'css-variables' },
   },
+  // El traductor de /directo/traductor es un componente de React (client:only)
+  integrations: [react()],
   vite: {
-    plugins: [romDeMario(), fuentesTrasReiniciar()],
-    // Los workers de Mario (futuros simulados) y de Whisper son módulos ES
+    plugins: [romDeMario(), fuentesTrasReiniciar(), sinWasmDeOnnx()],
+    // Los workers de Mario (futuros simulados), de Whisper y del chat local son módulos ES
     worker: { format: 'es', plugins: () => [sinWasmDeOnnx()] },
-    // Sin esto, Vite descubre jsnes y transformers.js al abrir la página y recarga a mitad de partida
-    optimizeDeps: { include: ['jsnes', '@huggingface/transformers'] },
+    // Sin esto, Vite descubre estas dependencias al abrir la página y recarga a mitad de la demo
+    optimizeDeps: {
+      include: [
+        'jsnes',
+        '@huggingface/transformers',
+        'marked',
+        'runonweb/translate',
+        'runonweb/remove-bg',
+        'runonweb/caption',
+        'runonweb/emoji',
+        'runonweb/tts',
+      ],
+    },
   },
   fonts: [
     {
