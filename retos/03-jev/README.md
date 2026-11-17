@@ -27,11 +27,11 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-`src/config.js` ya trae el token del taller:
+Pega el token del taller (está en la presentación y en [/apis](/apis)) en `src/config.js`:
 
 ```js
 export const API_URL = 'https://upskilling-mwc-taller.midudev.workers.dev';
-export const TOKEN = 'mwc-barcelona-2026';
+export const TOKEN = 'pega-aquí-el-token';
 ```
 
 Tienes todos los detalles de la API en [/apis](/apis#jev).

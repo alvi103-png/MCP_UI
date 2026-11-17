@@ -1,7 +1,7 @@
 # Copia este archivo a .dev.vars (desarrollo local) y rellena los valores.
 # En producción: pnpm wrangler secret put <NOMBRE>
 
-# Token compartido que se entrega a los asistentes del taller
+# Token compartido que se entrega a los asistentes del taller (se muestra en /apis y en las slides)
 WORKSHOP_TOKEN=mwc-taller-cambia-esto
 
 # Claves reales (nunca llegan al navegador de los asistentes)

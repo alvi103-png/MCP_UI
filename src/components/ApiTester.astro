@@ -1,6 +1,8 @@
 ---
 // Fila de un endpoint con botón para probarlo desde la propia página.
 // La petición va a la ruta relativa: en local prueba el Worker local y en el deploy, el deploy.
+import { TOKEN_DEL_TALLER } from '../data/taller';
+
 interface Props {
   method: 'GET' | 'POST';
   path: string;
@@ -13,7 +15,7 @@ const json = body === undefined ? '' : JSON.stringify(body, null, 2);
 const rows = Math.min(json.split('\n').length, 18);
 ---
 
-<div class="tester" data-tester data-method={method} data-path={path}>
+<div class="tester" data-tester data-method={method} data-path={path} data-token={TOKEN_DEL_TALLER}>
   <div class="bar">
     <span class="method">{method}</span>
     <code class="url">{origin}{path}</code>
@@ -167,8 +169,6 @@ const rows = Math.min(json.split('\n').length, 18);
 </style>
 
 <script>
-  import { TOKEN_DEL_TALLER } from '../data/taller';
-
   function pretty(text: string): string {
     try {
       return JSON.stringify(JSON.parse(text), null, 2);
@@ -178,7 +178,7 @@ const rows = Math.min(json.split('\n').length, 18);
   }
 
   async function run(tester: HTMLElement) {
-    const { method = 'GET', path = '' } = tester.dataset;
+    const { method = 'GET', path = '', token = '' } = tester.dataset;
     const button = tester.querySelector<HTMLButtonElement>('[data-run]')!;
     const result = tester.querySelector<HTMLElement>('[data-result]')!;
     const status = tester.querySelector<HTMLElement>('[data-status]')!;
@@ -212,7 +212,7 @@ const rows = Math.min(json.split('\n').length, 18);
       const response = await fetch(path, {
         method,
         headers: {
-          Authorization: `Bearer ${TOKEN_DEL_TALLER}`,
+          Authorization: `Bearer ${token}`,
           ...(body ? { 'Content-Type': 'application/json' } : {}),
         },
         body,

@@ -112,8 +112,11 @@ const fetchOpenAI = `const response = await fetch('${origin}/api/openai/v1/chat/
 const data = await response.json();
 console.log(data.choices[0].message.content);`;
 
+// Si se compila sin WORKSHOP_TOKEN en .dev.vars, los ejemplos muestran un marcador
+const token = TOKEN_DEL_TALLER || 'TU_TOKEN';
+
 const envExample = `# .env
-TOKEN_DEL_TALLER=${TOKEN_DEL_TALLER}`;
+TOKEN_DEL_TALLER=${token}`;
 
 // Cuerpos de ejemplo de los botones «Probar» (editables en la página)
 const bodyJev = {
@@ -159,16 +162,22 @@ const bodyResponses = {
 
   <div class="token">
     <p class="label" id="token-label">Token del taller</p>
-    <div class="token-row">
-      <code>{TOKEN_DEL_TALLER}</code>
-      <button type="button" data-copy={TOKEN_DEL_TALLER}>Copiar</button>
-    </div>
+    {
+      TOKEN_DEL_TALLER ? (
+        <div class="token-row">
+          <code>{TOKEN_DEL_TALLER}</code>
+          <button type="button" data-copy={TOKEN_DEL_TALLER}>Copiar</button>
+        </div>
+      ) : (
+        <p class="muted">Lo verás en la presentación del taller.</p>
+      )
+    }
   </div>
 
   <dl class="facts">
     <div>
       <dt>Autenticación</dt>
-      <dd><code>Authorization: Bearer {TOKEN_DEL_TALLER}</code></dd>
+      <dd><code>Authorization: Bearer {token}</code></dd>
     </div>
     <div>
       <dt>Límite</dt>

@@ -17,7 +17,7 @@ Este repositorio contiene:
 
 ```bash
 pnpm install
-cp .dev.vars.example .dev.vars   # y rellena las claves
+cp .dev.vars.example .dev.vars   # y rellena las claves y el token del taller
 pnpm dev
 ```
 
@@ -62,7 +62,7 @@ pnpm wrangler secret put TYPESAFE_API_KEY
 pnpm build && pnpm wrangler deploy
 ```
 
-El token se muestra en `/apis` y viene en `retos/*/src/config.js`; se define en `src/data/taller.ts`. Al terminar el taller, cambia `WORKSHOP_TOKEN` para que deje de funcionar.
+El token no está en git. Se lee de `WORKSHOP_TOKEN` en `.dev.vars` al compilar y se muestra en `/apis` y en las slides; los asistentes lo pegan en `retos/*/src/config.js`. Tiene que coincidir con el secreto del Worker. Como `pnpm deploy` compila en local, la web desplegada sí lo muestra. Al terminar el taller, cambia el secreto para que deje de funcionar.
 
 ## Los retos
 
@@ -72,7 +72,7 @@ Una misma tienda online, cuatro piezas:
 | --- | --- | --- |
 | 1 · MCP UI | `retos/01-mcp-ui` | `npm install && npm run dev` → `http://localhost:3001/mcp` |
 | 2 · WebMCP | `retos/02-webmcp` | `npm install && npm run dev` → `http://localhost:5173` |
-| 3 · Jev | `retos/03-jev` | igual; el token ya está en `src/config.js` |
+| 3 · Jev | `retos/03-jev` | igual; pega el token en `src/config.js` |
 | 4 · IA local | `retos/04-ia-local` | igual. `solucion/` es la aplicación completa |
 
 Los retos 2, 3 y 4 comparten la misma tienda: el `inicio` de cada uno es la `solucion` del anterior. Solo cambian `src/webmcp.js`, `src/jev.js` y `src/ia-local.js`.
