@@ -159,26 +159,33 @@ if (answers.tema.choice === 'envio') abrirIncidencia('logística');
 
 estrellas = Math.round(answers.nota.score) + 1;`;
 
-const localSummarizer = `if ((await Summarizer.availability()) !== 'unavailable') {
+const localSummarizer = `const idioma = { expectedInputLanguages: ['es'], outputLanguage: 'es' };
+
+if ((await Summarizer.availability(idioma)) !== 'unavailable') {
   const summarizer = await Summarizer.create({
+    ...idioma,
     type: 'tldr',
     length: 'short',
-    outputLanguage: 'es',
     monitor(m) {
-      m.addEventListener('downloadprogress', (e) => progreso(e.loaded));
+      m.addEventListener('downloadprogress', (e) => console.log(e.loaded));
     },
   });
 
-  for await (const trozo of summarizer.summarizeStreaming(reseñas)) {
-    pintar(trozo);
+  const article = document.querySelector('article').innerText;
+  let summary = '';
+
+  for await (const trozo of summarizer.summarizeStreaming(article)) {
+    summary += trozo;
   }
+
+  console.log(summary);
 }`;
 
 const localPrompt = `const sesion = await LanguageModel.create({
   initialPrompts: [{ role: 'system', content: 'Analizas reseñas de una tienda.' }],
 });
 
-const respuesta = await sesion.prompt(reseñas, {
+const respuesta = await sesion.prompt('Este producto es una caca', {
   responseConstraint: {
     type: 'object',
     properties: {
@@ -188,16 +195,19 @@ const respuesta = await sesion.prompt(reseñas, {
   },
 });
 
-const { pros, contras } = JSON.parse(respuesta);`;
+const { pros, contras } = JSON.parse(respuesta);
+
+console.log('Pros:', pros);
+console.log('Contras:', contras);`;
 
 const localWebgpu = `import { pipeline } from '@huggingface/transformers';
 
 const generador = await pipeline(
   'text-generation',
-  'onnx-community/gemma-3-270m-it-ONNX',
+  'onnx-community/Qwen3.5-0.8B-Text-ONNX',
   {
     device: navigator.gpu ? 'webgpu' : 'wasm',
-    dtype: 'q4',                       // 320 MB que descarga el usuario
+    dtype: 'q4f16',                    // 470 MB que descarga el usuario
     progress_callback: mostrarProgreso,
   },
 );
@@ -673,11 +683,11 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       </Slide>
 
       <Slide label={B4} title="Summarizer API">
-        <Code code={localSummarizer} lang="js" theme={theme} />
+        <Code code={localSummarizer} lang="js" theme={theme} class="dense" />
       </Slide>
 
       <Slide label={B4} title="Prompt API: JSON garantizado">
-        <Code code={localPrompt} lang="js" theme={theme} />
+        <Code code={localPrompt} lang="js" theme={theme} class="dense" />
       </Slide>
 
       <Slide label={B4} title="Plan B: WebGPU">

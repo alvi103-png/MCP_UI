@@ -479,6 +479,13 @@ pre + .list {
   overflow: hidden;
 }
 
+/* Para snippets de ~20 líneas que no caben con el tamaño normal */
+.slide pre.dense {
+  padding-block: 28px;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
 /* ── Agenda ── */
 
 .agenda {
