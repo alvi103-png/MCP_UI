@@ -48,7 +48,7 @@ Los asistentes usan un único token (`WORKSHOP_TOKEN`). Las claves reales se que
 | `GET /api/openai/v1/models` | Lista de modelos permitidos |
 
 - CORS abierto, para llamarlas desde el navegador.
-- Límite de 100 peticiones cada 10 s por IP, y 256 KB por petición (`wrangler.jsonc` y `src/lib/proxy.ts`). Como toda la sala comparte la Wi-Fi (y por tanto la IP), el límite está pensado para la sala entera. Las respuestas 429 llevan `Retry-After` (el SDK de OpenAI reintenta solo).
+- Límite de 300 peticiones cada 10 s por IP, y 256 KB por petición (`wrangler.jsonc` y `src/lib/proxy.ts`). Como toda la sala comparte la Wi-Fi (y por tanto la IP), el límite está pensado para la sala entera. Las respuestas 429 llevan `Retry-After` (el SDK de OpenAI reintenta solo).
 - Los modelos de OpenAI permitidos se configuran en `OPENAI_MODELS` (`wrangler.jsonc`).
 - Son compatibles con los SDK oficiales cambiando la `baseURL` (ver `/apis`).
 
