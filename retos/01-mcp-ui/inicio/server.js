@@ -27,7 +27,7 @@ export function crearServidor() {
   //   - Añade a la configuración:  _meta: { ui: { resourceUri: VISTA_CATALOGO } }
   //   - Devuelve también los datos para la vista:
   //     structuredContent: { productos, carrito: verCarrito() }
-  server.registerTool(
+  registerAppTool(server,
     'buscar_productos',
     {
       title: 'Buscar productos',
@@ -37,6 +37,8 @@ export function crearServidor() {
         categoria: z.enum(categorias).optional().describe('Categoría del producto'),
         precioMaximo: z.number().positive().optional().describe('Precio máximo en euros'),
       }),
+      _meta: { ui: { resourceUri: VISTA_CATALOGO } }
+
     },
     async (filtros) => {
       const productos = buscarProductos(filtros);
@@ -50,6 +52,7 @@ export function crearServidor() {
               : 'No hay productos que coincidan con la búsqueda.',
           },
         ],
+        structuredContent: { productos, carrito: verCarrito() }
       };
     },
   );
@@ -64,6 +67,11 @@ export function crearServidor() {
   //   - Devuelve el carrito en `structuredContent` para que la vista pueda pintarlo
   //   - Si el producto no existe, devuelve { isError: true, content: [...] }
 
+  registerAppResource(server, 'Catálogo de la tienda', VISTA_CATALOGO, { description: 'Cuadrícula de productos con botón para añadir al carrito' }, 
+    async () => ({
+      contents: [{ uri: VISTA_CATALOGO, mimeType: RESOURCE_MIME_TYPE, text: await crearVista() }],
+  }))
+  
   server.registerTool(
     'ver_carrito',
     {
@@ -84,6 +92,32 @@ export function crearServidor() {
         ],
         structuredContent: carrito,
       };
+    },
+  );
+
+  server.registerTool(
+    'anadir_al_carrito',
+    {
+      title: 'Añadir al carrito',
+      description: 'Añade elementos al carrito',
+      inputSchema: z.object({
+        id: z.string().describe('Id del producto, por ejemplo auriculares-anc'),
+        cantidad: z.int().positive().optional().describe('Unidades que añadir (1 por defecto)')
+      }),
+    },
+    async ({ id, cantidad}) => {
+      try {
+        const carrito = añadirAlCarrito(id, cantidad);
+        return {
+          content: [{ type: 'text', text: `Añadido. El carrito tiene ${carrito.unidades} unidades, total ${carrito.total} €.`}],
+          structuredContent: carrito,
+        };
+      } catch (error) {
+        return {
+          isError: true,
+          content: [{ type: 'text', text: error.message }],
+        };
+      }
     },
   );
 

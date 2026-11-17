@@ -1,5 +1,6 @@
 // Código de la vista: se ejecuta dentro del iframe que muestra el cliente MCP.
 import { App } from '@modelcontextprotocol/ext-apps';
+import { productos } from '../productos';
 
 const $productos = document.querySelector('#productos');
 const $titulo = document.querySelector('#titulo');
@@ -51,7 +52,32 @@ async function añadir(producto, $boton) {
   //   - Desactiva el botón mientras dura la llamada y muestra los errores en $estado
   //
   // TODO 6 (extra): cuéntale al modelo lo que ha hecho el usuario.
-  //   await app.updateModelContext({ content: [{ type: 'text', text: '…' }] })
+
+  $boton.disabled = true;
+  $estado.textContent = '';
+
+  try {
+    const resultado = await app.callServerTool({
+      name: 'anadir_al_carrito',
+      arguments: { id: producto.id, cantidad: 1}
+    });
+
+    if (resultado.isError) {
+      $estado.textContent = resultado.content[0].text;
+    } else {
+      pintarCarrito(resultado.structuredContent);
+      await app.updateModelContext({
+        content: [{ 
+          type: 'text',
+          text: `El usuario ha añadido "${producto.nombre}" al carrito. Ahora tiene ${resultado.structuredContent.unidades} unidades, total ${resultado.structuredContent.total} €.`,
+        }],
+      });
+    }
+  } catch (error) {
+    $estado.textContent = error.message;
+  } finally {
+    $boton.disabled = false;
+  }
   $estado.textContent = 'TODO 5: todavía no se puede añadir al carrito.';
 }
 
@@ -61,6 +87,13 @@ async function añadir(producto, $boton) {
 //   - Usa pintarProductos(productos) y pintarCarrito(carrito)
 
 // El botón del carrito le pide al asistente que continúe la conversación
+
+app.addEventListener('toolresult', (resultado) => {
+  const { productos, carrito } = resultado.structuredContent ?? {};
+  if (productos) pintarProductos(productos);
+  if (carrito) pintarCarrito(carrito);
+});
+
 $carrito.addEventListener('click', () => {
   app.sendMessage({
     role: 'user',
