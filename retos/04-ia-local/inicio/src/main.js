@@ -56,17 +56,17 @@ function pintarProductos() {
       h(
         'li',
         { className: 'producto' },
-        h('span', { className: 'emoji', ariaHidden: 'true' }, producto.emoji),
-        h('h3', {}, producto.nombre),
-        h('p', { className: 'descripcion' }, producto.descripcion),
-        encaje !== undefined && h('p', { className: 'encaje' }, `Encaje: ${Math.round(encaje * 100)} %`),
-        h('p', { className: 'pie' }, h('strong', {}, euros(producto.precio)), h('span', {}, `★ ${producto.valoracion}`)),
+        // La foto abre la ficha del producto
         h(
-          'div',
-          { className: 'acciones' },
-          h('button', { type: 'button', onclick: () => abrirDetalle(producto.id) }, 'Ver'),
-          h('button', { type: 'button', className: 'principal', onclick: () => añadirAlCarrito(producto.id) }, 'Añadir'),
+          'button',
+          { type: 'button', className: 'foto', ariaLabel: `Ver ${producto.nombre}`, onclick: () => abrirDetalle(producto.id) },
+          h('img', { src: producto.imagen, alt: '', width: 560, height: 560 }),
+          encaje !== undefined && h('span', { className: 'encaje' }, `Encaje: ${Math.round(encaje * 100)} %`),
+          h('span', { className: 'valoracion' }, `★ ${producto.valoracion}`),
         ),
+        h('div', { className: 'titulo' }, h('h3', {}, producto.nombre), h('strong', {}, euros(producto.precio))),
+        h('p', { className: 'descripcion' }, producto.descripcion),
+        h('button', { type: 'button', className: 'añadir', onclick: () => añadirAlCarrito(producto.id) }, 'Añadir al carrito'),
       ),
     ),
   );
@@ -100,6 +100,7 @@ function pintarCarrito() {
           h(
             'li',
             {},
+            h('img', { src: linea.imagen, alt: '', width: 40, height: 40 }),
             h('span', {}, `${linea.cantidad} × ${linea.nombre}`),
             h('span', {}, euros(linea.subtotal)),
             h('button', { type: 'button', ariaLabel: `Quitar ${linea.nombre}`, onclick: () => quitarDelCarrito(linea.id) }, '×'),
@@ -140,24 +141,80 @@ $inteligente.addEventListener('submit', async (evento) => {
 function abrirDetalle(id) {
   const producto = obtenerProducto(id);
 
-  const $resumen = h('p', { className: 'resumen', role: 'status' });
+  const $reseñas = h(
+    'ul',
+    { className: 'reseñas' },
+    ...producto.reseñas.map((reseña, indice) =>
+      h(
+        'li',
+        { style: `--i: ${indice}` },
+        h('p', { className: 'autor' }, `${reseña.autor} · ${'★'.repeat(reseña.nota)}`),
+        h('p', {}, reseña.texto),
+      ),
+    ),
+  );
+  const $resumen = h('div', { className: 'resumen', role: 'status' });
   const $resumir = h('button', { type: 'button' }, 'Resumir reseñas en local');
+  const $verReseñas = h(
+    'button',
+    { type: 'button', className: 'ver-reseñas', hidden: true },
+    `Ver las ${producto.reseñas.length} reseñas`,
+  );
 
-  // Bloque 4 · IA en el navegador
+  // Bloque 4 · IA en el navegador: las reseñas se funden en un resumen hecho en el dispositivo
   $resumir.addEventListener('click', async () => {
     $resumir.disabled = true;
-    $resumen.textContent = 'Preparando el modelo…';
+    $verReseñas.hidden = true;
+    restaurarReseñas($reseñas);
+    $reseñas.classList.add('leyendo');
+    $resumen.ariaBusy = 'true';
+    $resumen.replaceChildren('Preparando el modelo…');
+
+    // El modelo puede ir más rápido que la animación: guardamos lo generado y lo escribimos a nuestro ritmo
+    const salida = { texto: '', terminada: false };
+    const $texto = h('p');
+    let efecto;
+    const fundirYEscribir = () =>
+      (efecto ??= (async () => {
+        $resumen.replaceChildren(`Resumiendo ${producto.reseñas.length} reseñas…`);
+        await fundirReseñas($reseñas, $resumen);
+        $resumen.replaceChildren($texto);
+        await escribir($texto, salida);
+      })());
+
     try {
       const { texto, motor } = await resumirReseñas(producto, {
-        alProgresar: (porcentaje) => ($resumen.textContent = `Descargando el modelo… ${porcentaje} %`),
-        alEscribir: (parcial) => ($resumen.textContent = parcial),
+        alProgresar: (porcentaje) =>
+          efecto ||
+          $resumen.replaceChildren(
+            porcentaje < 100 ? `Descargando el modelo… ${porcentaje} %` : 'Cargando el modelo…',
+            h('progress', { max: 100, value: porcentaje }),
+          ),
+        alEscribir: (parcial) => {
+          salida.texto = parcial.trimStart();
+          fundirYEscribir();
+        },
       });
-      $resumen.textContent = `${texto}\n\n— ${motor}`;
+      salida.texto = texto;
+      salida.terminada = true;
+      await fundirYEscribir();
+      $resumen.append(h('small', {}, `— ${motor}`));
+      $verReseñas.hidden = !$reseñas.hidden;
     } catch (error) {
-      $resumen.textContent = error.message;
+      salida.terminada = true;
+      await efecto?.catch(() => {});
+      restaurarReseñas($reseñas);
+      $resumen.replaceChildren(error.message);
     } finally {
+      $reseñas.classList.remove('leyendo');
+      $resumen.ariaBusy = 'false';
       $resumir.disabled = false;
     }
+  });
+
+  $verReseñas.addEventListener('click', () => {
+    $verReseñas.hidden = true;
+    separarReseñas($reseñas);
   });
 
   const $aviso = h('p', { className: 'estado', role: 'status' });
@@ -195,25 +252,89 @@ function abrirDetalle(id) {
   });
 
   $contenido.replaceChildren(
-    h('span', { className: 'emoji', ariaHidden: 'true' }, producto.emoji),
-    h('h2', {}, producto.nombre),
-    h('p', { className: 'suave' }, producto.descripcion),
-    h('p', {}, h('strong', {}, euros(producto.precio)), ` · ★ ${producto.valoracion}`),
+    h(
+      'div',
+      { className: 'ficha' },
+      h('img', { src: producto.imagen, alt: '', width: 560, height: 560 }),
+      h(
+        'div',
+        {},
+        h('h2', {}, producto.nombre),
+        h('p', { className: 'suave' }, producto.descripcion),
+        h('p', { className: 'precio' }, h('strong', {}, euros(producto.precio)), h('span', {}, `★ ${producto.valoracion}`)),
+      ),
+    ),
     h('h3', {}, `Reseñas (${producto.reseñas.length})`),
     $resumir,
     $resumen,
-    h(
-      'ul',
-      { className: 'reseñas' },
-      ...producto.reseñas.map((reseña) =>
-        h('li', {}, h('p', { className: 'autor' }, `${reseña.autor} · ${'★'.repeat(reseña.nota)}`), h('p', {}, reseña.texto)),
-      ),
-    ),
+    $verReseñas,
+    $reseñas,
     h('h3', {}, 'Escribe una reseña'),
     $formulario,
   );
 
   if (!$detalle.open) $detalle.showModal();
+}
+
+// ── Efecto del resumen: las reseñas se funden en él ───────────────────────
+
+const menosMovimiento = matchMedia('(prefers-reduced-motion: reduce)');
+
+/** Cada reseña vuela hasta el resumen y se disuelve dentro; después la lista vacía se pliega */
+async function fundirReseñas($lista, $destino) {
+  $lista.classList.remove('leyendo');
+  if (menosMovimiento.matches) return;
+
+  const destino = $destino.getBoundingClientRect();
+  const vuelos = [...$lista.children].map(($reseña, indice) => {
+    const origen = $reseña.getBoundingClientRect();
+    const x = destino.x + destino.width / 2 - (origen.x + origen.width / 2);
+    const y = destino.y + destino.height / 2 - (origen.y + origen.height / 2);
+    return $reseña.animate(
+      [
+        { transform: 'none', opacity: 1, filter: 'blur(0)' },
+        { opacity: 0.9, filter: 'blur(1px)', offset: 0.6 },
+        { transform: `translate(${x}px, ${y}px) scale(0.2)`, opacity: 0, filter: 'blur(6px)' },
+      ],
+      { duration: 650, delay: indice * 90, easing: 'cubic-bezier(0.55, 0, 0.45, 1)', fill: 'forwards' },
+    );
+  });
+  await Promise.all(vuelos.map((vuelo) => vuelo.finished));
+
+  $destino.animate([{ boxShadow: '0 0 0 0 rgb(255 59 48 / 0.5)' }, { boxShadow: '0 0 0 12px rgb(255 59 48 / 0)' }], {
+    duration: 600,
+    easing: 'ease-out',
+  });
+  await $lista.animate([{ height: `${$lista.offsetHeight}px` }, { height: '0px' }], { duration: 250, easing: 'ease-in' })
+    .finished;
+  $lista.hidden = true;
+}
+
+/** Lo contrario: las reseñas salen del resumen y vuelven a su sitio */
+async function separarReseñas($lista) {
+  const vuelos = $lista.getAnimations({ subtree: true });
+  $lista.hidden = false;
+  $lista.animate([{ height: '0px' }, { height: `${$lista.offsetHeight}px` }], { duration: 250, easing: 'ease-out' });
+  for (const vuelo of vuelos) vuelo.reverse();
+  await Promise.all(vuelos.map((vuelo) => vuelo.finished));
+  restaurarReseñas($lista);
+}
+
+function restaurarReseñas($lista) {
+  for (const animacion of $lista.getAnimations({ subtree: true })) animacion.cancel();
+  $lista.hidden = false;
+}
+
+/** Escribe el texto letra a letra según llega, hasta que el modelo termina */
+async function escribir($elemento, salida) {
+  $elemento.className = 'escribiendo';
+  let letras = 0;
+  while (!salida.terminada || letras < salida.texto.length) {
+    letras = Math.min(letras + 1, salida.texto.length);
+    $elemento.textContent = salida.texto.slice(0, letras);
+    await new Promise(requestAnimationFrame);
+  }
+  $elemento.className = '';
 }
 
 // ── Ofertas (formulario que también se expone a los agentes) ──────────────

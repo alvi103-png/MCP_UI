@@ -90,8 +90,8 @@ export function vaciarCarrito() {
 
 export function verCarrito() {
   const lineas = [...carrito].map(([id, cantidad]) => {
-    const { nombre, precio, emoji } = obtenerProducto(id);
-    return { id, nombre, emoji, precio, cantidad, subtotal: precio * cantidad };
+    const { nombre, precio, imagen } = obtenerProducto(id);
+    return { id, nombre, imagen, precio, cantidad, subtotal: precio * cantidad };
   });
 
   return {

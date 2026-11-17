@@ -148,61 +148,116 @@ main {
   color: var(--suave);
 }
 
+/* Catálogo: la foto de estudio manda; el texto va debajo, sin caja alrededor */
 .productos {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 1px;
-  background: var(--linea);
-  border: 1px solid var(--linea);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2.25rem 1.25rem;
 }
 
 .producto {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.25rem;
-  background: var(--fondo);
+  min-width: 0;
 }
 
-.producto .emoji {
-  font-size: 2rem;
-  line-height: 1;
+/* El fondo es el gris de estudio de las fotos: mientras cargan no hay salto de color */
+.foto {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  margin-bottom: 0.9rem;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #1c1c1e;
+}
+
+.foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.foto:hover img {
+  transform: scale(1.04);
+}
+
+.foto:focus-visible {
+  outline-offset: 3px;
+}
+
+.foto .valoracion,
+.foto .encaje {
+  position: absolute;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.foto .valoracion {
+  left: 0.6rem;
+  bottom: 0.6rem;
+  background: rgb(10 10 10 / 0.72);
+  backdrop-filter: blur(6px);
+}
+
+/* Bloque 3: lo bien que encaja con la búsqueda inteligente */
+.foto .encaje {
+  top: 0.6rem;
+  left: 0.6rem;
+  background: var(--acento);
+  color: #fff;
+}
+
+.producto .titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .producto h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
+  line-height: 1.35;
+}
+
+.producto .titulo strong {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .producto .descripcion {
-  flex: 1;
-  font-size: 0.85rem;
+  display: -webkit-box;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
   color: var(--suave);
 }
 
-.producto .encaje {
-  font-size: 0.8rem;
-  color: var(--acento);
+/* Al final de la tarjeta, para que los botones de una fila queden alineados.
+   Con borde y no relleno: doce botones blancos le quitarían protagonismo a las fotos */
+.añadir {
+  margin-top: auto;
 }
 
-.producto .pie {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.producto .acciones {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.producto .acciones button {
-  flex: 1;
-  padding-inline: 0.5rem;
+.añadir:hover:not(:disabled) {
+  border-color: var(--texto);
+  background: var(--texto);
+  color: var(--fondo);
 }
 
 .principal {
@@ -238,11 +293,19 @@ main {
 
 #lineas li {
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.5rem;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 0.6rem;
   align-items: center;
-  padding-block: 0.4rem;
+  padding-block: 0.5rem;
   border-bottom: 1px solid var(--linea);
+}
+
+#lineas img {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: #1c1c1e;
 }
 
 #lineas .vacio {
@@ -313,6 +376,54 @@ form:tool-form-active {
   margin-block: 0.5rem;
 }
 
+/* Ficha del producto: la foto grande a la izquierda y los datos a su lado */
+.ficha {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.ficha img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: #1c1c1e;
+}
+
+.ficha > div {
+  padding-right: 1.5rem;
+}
+
+.ficha h2 {
+  margin-top: 0;
+}
+
+.ficha .precio {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--suave);
+}
+
+.ficha .precio strong {
+  font-size: 1.3rem;
+  color: var(--texto);
+}
+
+@media (max-width: 560px) {
+  .ficha {
+    grid-template-columns: 1fr;
+  }
+
+  .ficha img {
+    max-width: 240px;
+  }
+}
+
 .detalle h3 {
   font-size: 0.8rem;
   font-weight: 400;
@@ -337,6 +448,58 @@ form:tool-form-active {
 
 .resumen:empty {
   display: none;
+}
+
+.resumen progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  margin-top: 0.6rem;
+  accent-color: var(--acento);
+}
+
+.resumen small {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--suave);
+  font-size: 0.8rem;
+}
+
+/* Cursor mientras se escribe el resumen */
+.resumen .escribiendo::after {
+  content: '▍';
+  margin-left: 1px;
+  color: var(--acento);
+  animation: parpadeo 1s steps(1) infinite;
+}
+
+@keyframes parpadeo {
+  50% {
+    opacity: 0;
+  }
+}
+
+.ver-reseñas {
+  margin-top: 0.75rem;
+}
+
+/* Mientras el modelo «lee» las reseñas, antes de fundirlas en el resumen */
+.reseñas.leyendo li {
+  animation: leyendo 0.9s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+@keyframes leyendo {
+  to {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reseñas.leyendo li,
+  .resumen .escribiendo::after {
+    animation: none;
+  }
 }
 
 .reseñas {
