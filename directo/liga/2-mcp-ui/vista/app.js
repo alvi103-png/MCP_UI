@@ -192,69 +192,71 @@ function pintar(datos = {}) {
 }
 
 /* ───────────── Comunicación con el cliente MCP ───────────── */
+// En directo: pasos 4 a 8 (los pasos 1 a 3 están en server.js). Descomenta cada bloque en orden
+// (selecciona las líneas de código del paso y pulsa Cmd + /).
 
-// 1. El cliente nos envía los argumentos en cuanto el modelo llama a la herramienta…
-app.addEventListener('toolinput', ({ arguments: argumentos }) => {
-  if (argumentos?.equipo) pintarEstado(`Buscando «${argumentos.equipo}»…`);
-});
+// ─── PASO 4 · El cliente nos pasa los argumentos y, después, el resultado ───────────
+// toolinput llega en cuanto el modelo llama a la herramienta; toolresult, cuando termina.
+// app.addEventListener('toolinput', ({ arguments: argumentos }) => {
+//   if (argumentos?.equipo) pintarEstado(`Buscando «${argumentos.equipo}»…`);
+// });
+//
+// app.addEventListener('toolresult', (resultado) => {
+//   if (resultado.isError) pintarEstado(resultado.content?.[0]?.text ?? 'Algo ha fallado.', true);
+//   else pintar(resultado.structuredContent);
+// });
 
-// 2. …y después el resultado
-app.addEventListener('toolresult', (resultado) => {
-  if (resultado.isError) pintarEstado(resultado.content?.[0]?.text ?? 'Algo ha fallado.', true);
-  else pintar(resultado.structuredContent);
-});
+// ─── PASO 5 · La vista llama a las herramientas del servidor, sin pasar por el modelo ───
+// Las pestañas y los clics en un equipo usan callServerTool.
+// async function llamar(name, argumentos = {}) {
+//   $contenido.setAttribute('aria-busy', 'true');
+//   try {
+//     const resultado = await app.callServerTool({ name, arguments: argumentos });
+//     if (resultado.isError) throw new Error(resultado.content?.[0]?.text);
+//     pintar(resultado.structuredContent);
+//   } catch (error) {
+//     pintarEstado(error.message || 'No se ha podido cargar.', true);
+//   } finally {
+//     $contenido.removeAttribute('aria-busy');
+//   }
+// }
+//
+// document.addEventListener('click', (evento) => {
+//   const $pestaña = evento.target.closest('[data-herramienta]');
+//   if ($pestaña) llamar($pestaña.dataset.herramienta);
+//
+//   const $equipo = evento.target.closest('[data-equipo]');
+//   if ($equipo) llamar('ver_equipo', { equipo: $equipo.dataset.equipo });
+// });
 
-// 3. La vista también puede llamar a las herramientas del servidor
-async function llamar(name, argumentos = {}) {
-  $contenido.setAttribute('aria-busy', 'true');
-  try {
-    const resultado = await app.callServerTool({ name, arguments: argumentos });
-    if (resultado.isError) throw new Error(resultado.content?.[0]?.text);
-    pintar(resultado.structuredContent);
-    return true;
-  } catch (error) {
-    pintarEstado(error.message || 'No se ha podido cargar.', true);
-    return false;
-  } finally {
-    $contenido.removeAttribute('aria-busy');
-  }
-}
+// ─── PASO 6 · Si el usuario abre un equipo en la vista, se lo contamos al modelo ─────
+// document.addEventListener('click', (evento) => {
+//   const $equipo = evento.target.closest('[data-equipo]');
+//   if (!$equipo) return;
+//
+//   app.updateModelContext({
+//     content: [{ type: 'text', text: `El usuario ha abierto en la interfaz la ficha de este equipo: ${$equipo.dataset.equipo}.` }],
+//   });
+// });
 
-document.addEventListener('click', async (evento) => {
-  const $pestaña = evento.target.closest('[data-herramienta]');
-  if ($pestaña) {
-    await llamar($pestaña.dataset.herramienta);
-    return;
-  }
-
-  const $equipo = evento.target.closest('[data-equipo]');
-  if ($equipo) {
-    const { equipo } = $equipo.dataset;
-    // 4. Si el usuario navega por la interfaz, se lo contamos al modelo
-    if (await llamar('ver_equipo', { equipo })) {
-      await app.updateModelContext({
-        content: [{ type: 'text', text: `El usuario ha abierto en la interfaz la ficha de este equipo: ${equipo}.` }],
-      });
-    }
-    return;
-  }
-
-  // 5. Y puede escribir en el chat en nombre del usuario
-  const $preguntar = evento.target.closest('[data-preguntar]');
-  if ($preguntar) {
-    await app.sendMessage({ role: 'user', content: [{ type: 'text', text: $preguntar.dataset.preguntar }] });
-  }
-});
-
-// El tema, los colores y las fuentes del cliente, para que la vista no desentone
-function aplicarContexto(contexto) {
-  if (contexto?.theme) applyDocumentTheme(contexto.theme);
-  if (contexto?.styles?.variables) applyHostStyleVariables(contexto.styles.variables);
-  if (contexto?.styles?.css?.fonts) applyHostFonts(contexto.styles.css.fonts);
-}
-
-app.addEventListener('hostcontextchanged', aplicarContexto);
+// ─── PASO 7 · La vista escribe en el chat en nombre del usuario ─────────────────────
+// El botón «Pregúntale al asistente» de la ficha de un equipo.
+// document.addEventListener('click', (evento) => {
+//   const $preguntar = evento.target.closest('[data-preguntar]');
+//   if (!$preguntar) return;
+//
+//   app.sendMessage({ role: 'user', content: [{ type: 'text', text: $preguntar.dataset.preguntar }] });
+// });
 
 // Conectamos con el cliente (siempre después de registrar los eventos)
 await app.connect();
-aplicarContexto(app.getHostContext());
+
+// ─── PASO 8 · Que la vista no desentone: el tema, los colores y las fuentes del cliente ───
+// function aplicarContexto(contexto) {
+//   if (contexto?.theme) applyDocumentTheme(contexto.theme);
+//   if (contexto?.styles?.variables) applyHostStyleVariables(contexto.styles.variables);
+//   if (contexto?.styles?.css?.fonts) applyHostFonts(contexto.styles.css.fonts);
+// }
+//
+// aplicarContexto(app.getHostContext());
+// app.addEventListener('hostcontextchanged', aplicarContexto);
