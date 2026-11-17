@@ -247,8 +247,17 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
 
       <Slide kind="statement">
         <div class="split">
-          <p class="big">¿Está tu web preparada para un usuario que no es una persona?</p>
-          <PixelIcon name="robot" size={448} class="hero blink" />
+          <p class="big">
+            ¿Está tu web<br />preparada para<br />un usuario que<br /><span class="accent">no es una persona</span>?
+          </p>
+          <div class="not-human">
+            <PixelIcon name="robot" size={384} class="hero blink" />
+            {/* Le dimos la vuelta al captcha de siempre */}
+            <p class="captcha">
+              <span class="tick"><PixelIcon name="check" size={48} /></span>
+              Soy un robot
+            </p>
+          </div>
         </div>
       </Slide>
 
@@ -362,7 +371,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
           <li><span class="n">2</span><PixelIcon name="trophy" size={80} /><div><h3>Datos reales</h3><p>La API pública de ESPN, sin clave</p></div></li>
           <li><span class="n">3</span><PixelIcon name="chat" size={80} /><div><h3>Lo conectamos al chat</h3><p>«¿Cómo le fue al Barça en el último partido?»</p></div></li>
         </ol>
-        <p class="foot">directo/liga/1-mcp</p>
+        <p class="foot"><a class="demo" href="http://localhost:3003" target="_blank" rel="noopener">Abrir la demo ↗</a>directo/liga/1-mcp · npm run dev</p>
       </Slide>
 
       <Slide kind="statement" label={B1}>
@@ -402,7 +411,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
           <li><span class="n">2</span><PixelIcon name="mcp-ui" size={80} /><div><h3>Datos para la vista</h3><p>Tabla, resultados y ficha de equipo con escudos</p></div></li>
           <li><span class="n">3</span><PixelIcon name="cursor" size={80} /><div><h3>La vista llama al servidor</h3><p>Clic en un equipo → <code>ver_equipo</code>, sin pasar por el modelo</p></div></li>
         </ol>
-        <p class="foot">directo/liga/2-mcp-ui</p>
+        <p class="foot"><a class="demo" href="http://localhost:3003" target="_blank" rel="noopener">Abrir la demo ↗</a>directo/liga/2-mcp-ui · npm run dev</p>
       </Slide>
 
       <Slide kind="reto" label={B1}>
@@ -415,7 +424,7 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
               <li>Registra el recurso <code>ui://</code></li>
               <li>Haz que el botón «Añadir» llame al servidor</li>
             </ul>
-            <p class="path">retos/01-mcp-ui/inicio · 18 min</p>
+            <p class="path">retos/01-mcp-ui/inicio · 18 min · <a href="http://localhost:3001" target="_blank" rel="noopener">localhost:3001</a></p>
           </div>
           <PixelIcon name="mcp-ui" size={320} class="hero" />
         </div>
@@ -489,6 +498,15 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
           <li><PixelIcon name="search" size={80} /><h3>Para probar</h3><p>DevTools → Application → WebMCP</p></li>
         </ul>
         <p class="foot">Es una mejora progresiva: si el navegador no lo tiene, tu web funciona igual.</p>
+      </Slide>
+
+      <Slide label={B2} title="En directo: entradas del Camp Nou">
+        <ol class="steps">
+          <li><span class="n">1</span><PixelIcon name="webmcp" size={80} /><div><h3>Un formulario es una herramienta</h3><p><code>toolname="reservar_entradas_camp_nou"</code></p></div></li>
+          <li><span class="n">2</span><PixelIcon name="chat" size={80} /><div><h3>Se lo pides al asistente</h3><p>«Dos entradas para el próximo partido, las más baratas»</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="check" size={80} /><div><h3>El agente rellena, tú confirmas</h3><p>Sin leer la pantalla ni simular clics</p></div></li>
+        </ol>
+        <p class="foot"><a class="demo" href="/directo/entradas" target="_blank" rel="noopener">Abrir la demo ↗</a>/directo/entradas</p>
       </Slide>
 
       <Slide kind="reto" label={B2}>
@@ -583,6 +601,24 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
         </div>
       </Slide>
 
+      <Slide label={B3} title="En directo: la primera decisión">
+        <ol class="steps">
+          <li><span class="n">1</span><PixelIcon name="question" size={80} /><div><h3>Una pregunta: ¿de qué trata?</h3><p><code>choice</code>: envío, devolución, pago, producto o spam</p></div></li>
+          <li><span class="n">2</span><PixelIcon name="score" size={80} /><div><h3>Más preguntas, una sola llamada</h3><p><code>noul</code>: ¿urgente? · <code>score</code>: ¿cómo de enfadado?</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="check" size={80} /><div><h3>El código decide con números</h3><p><code>if (urgente.noul &gt; 0.7)</code></p></div></li>
+        </ol>
+        <p class="foot"><a class="demo" href="/directo/clasificar" target="_blank" rel="noopener">Abrir la demo ↗</a>directo/jev/clasificar.js</p>
+      </Slide>
+
+      <Slide label={B3} title="En directo: Jev juega a Super Mario Bros.">
+        <ol class="steps">
+          <li><span class="n">1</span><PixelIcon name="eye" size={80} /><div><h3>Lee la RAM del juego</h3><p>Suelo, huecos y enemigos en un JSON</p></div></li>
+          <li><span class="n">2</span><PixelIcon name="jev" size={80} /><div><h3>Cuatro preguntas en una llamada</h3><p>Acción, foco, ¿saltar ya? y peligro</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="terminal" size={80} /><div><h3>El código juega</h3><p>La acción elegida se convierte en botones, frame a frame</p></div></li>
+        </ol>
+        <p class="foot"><a class="demo" href="/directo/mario" target="_blank" rel="noopener">Abrir la demo ↗</a>/directo/mario</p>
+      </Slide>
+
       <Slide kind="reto" label={B3}>
         <div class="split">
           <div>
@@ -671,6 +707,15 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
             <tr><td>Compatibilidad</td><td>Depende del dispositivo</td><td>Cualquiera</td></tr>
           </tbody>
         </table>
+      </Slide>
+
+      <Slide label={B4} title="En directo: resumir en el navegador">
+        <ol class="steps">
+          <li><span class="n">1</span><PixelIcon name="ia-local" size={80} /><div><h3>¿Está el modelo?</h3><p><code>Summarizer.availability()</code></p></div></li>
+          <li><span class="n">2</span><PixelIcon name="download" size={80} /><div><h3>Se descarga una vez</h3><p><code>Summarizer.create()</code> con progreso</p></div></li>
+          <li><span class="n">3</span><PixelIcon name="doc" size={80} /><div><h3>Resume en streaming</h3><p><code>summarizeStreaming()</code>: el texto no sale del dispositivo</p></div></li>
+        </ol>
+        <p class="foot"><a class="demo" href="/directo/resumir" target="_blank" rel="noopener">Abrir la demo ↗</a>/directo/resumir</p>
       </Slide>
 
       <Slide kind="reto" label={B4}>
@@ -818,6 +863,8 @@ const salida = await generador(mensajes, { max_new_tokens: 120 });`;
       // Clic en la mitad derecha: siguiente. En la izquierda: anterior
       addEventListener('click', (event) => {
         if (getSelection()?.toString()) return;
+        // Los enlaces a las demos se abren en otra pestaña sin pasar de slide
+        if ((event.target as Element).closest('a')) return;
         show(current + (event.clientX > innerWidth / 2 ? 1 : -1));
       });
 

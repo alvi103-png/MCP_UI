@@ -16,15 +16,17 @@ const colors: Record<string, string> = {
   '-': 'var(--muted)',
 };
 
-// Agrupa píxeles contiguos del mismo color en un único rect
-const rects: { x: number; y: number; w: number; fill: string }[] = [];
+// Un único path por color: con un rect por fila, al escalar el escenario
+// a un tamaño no entero se ven rayas finas entre filas
+const paths = new Map<string, string>();
 pixels.forEach((row, y) => {
   let x = 0;
   while (x < row.length) {
     const char = row[x];
     let end = x;
     while (row[end + 1] === char) end++;
-    if (colors[char]) rects.push({ x, y, w: end - x + 1, fill: colors[char] });
+    const fill = colors[char];
+    if (fill) paths.set(fill, `${paths.get(fill) ?? ''}M${x} ${y}h${end - x + 1}v1h-${end - x + 1}z`);
     x = end + 1;
   }
 });
@@ -38,7 +40,7 @@ pixels.forEach((row, y) => {
   shape-rendering="crispEdges"
   aria-hidden="true"
 >
-  {rects.map((r) => <rect x={r.x} y={r.y} width={r.w} height="1" fill={r.fill} />)}
+  {[...paths].map(([fill, d]) => <path d={d} fill={fill} />)}
 </svg>
 
 <style>

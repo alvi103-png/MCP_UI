@@ -1,5 +1,10 @@
 /* Presentación: escenario fijo de 1920×1080 que se escala a la ventana */
 
+/* Las slides, en negro puro (la web usa #0a0a0a) */
+:root {
+  --bg: #000;
+}
+
 html,
 body {
   height: 100%;
@@ -79,6 +84,22 @@ body {
   font-size: 34px;
 }
 
+/* Enlace a la demo en directo: se abre en otra pestaña y no pasa de slide */
+.demo {
+  display: inline-block;
+  margin-right: 28px;
+  padding: 10px 28px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.demo:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* ── Imagen a pantalla completa (portada y cierre) ── */
 
 .slide.image {
@@ -137,6 +158,36 @@ body {
   gap: 80px;
 }
 
+/* Robot con su casilla de «Soy un robot» debajo */
+.not-human {
+  display: grid;
+  justify-items: center;
+  gap: 56px;
+}
+
+.captcha {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 40px 24px 28px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 40px;
+  white-space: nowrap;
+  color: var(--fg) !important;
+}
+
+.captcha .tick {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border: 3px solid var(--muted);
+  border-radius: 6px;
+  color: var(--accent);
+}
+
 .avatar {
   width: 384px; /* 64px × 6: múltiplo entero para que los píxeles salgan iguales */
   height: 384px;
@@ -168,11 +219,11 @@ body {
   }
 }
 
-.blink rect[fill='var(--accent)'] {
+.blink [fill='var(--accent)'] {
   animation: blink 1.4s steps(1, end) infinite;
 }
 
-.steam rect[fill='var(--muted)'] {
+.steam [fill='var(--muted)'] {
   animation: steam 1s steps(1, end) infinite;
 }
 
@@ -759,6 +810,15 @@ pre + .list {
 .slide.active .icon-row > :nth-child(2) { --d: 0.5s; }
 .slide.active .icon-row > :nth-child(3) { --d: 0.7s; }
 .slide.active .icon-row > :nth-child(4) { --d: 0.9s; }
+
+/* La casilla sale tras el robot y se marca un momento después */
+.slide.active .captcha {
+  animation: rise 0.5s var(--ease) 0.8s both;
+}
+
+.slide.active .captcha .pixel-icon {
+  animation: pop 0.3s steps(3, end) 1.4s both;
+}
 
 .slide.active .qr {
   animation: pop 0.5s steps(5, end) 0.5s both;
