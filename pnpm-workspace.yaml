@@ -1,3 +1,6 @@
+packages:
+  - retos/*/*
+  - directo/*/*
 allowBuilds:
   esbuild: true
   workerd: true
