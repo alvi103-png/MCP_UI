@@ -1,0 +1,38 @@
+---
+// «← directo»: vuelve al listado de demos en directo. Cada página le da el color con `class`.
+interface Props {
+  class?: string;
+}
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<a href="/directo" class:list={['back-link', className]} aria-label="Volver a las demos en directo" {...rest}>
+  <span class="arrow" aria-hidden="true">←</span>directo
+</a>
+
+<style>
+  .back-link {
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .arrow {
+    display: inline-block;
+    margin-right: 0.35em;
+    transition: translate 0.24s steps(4, end);
+  }
+
+  .back-link:hover .arrow,
+  .back-link:focus-visible .arrow {
+    translate: -4px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .arrow {
+      transition: none;
+    }
+  }
+</style>

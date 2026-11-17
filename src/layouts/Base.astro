@@ -15,6 +15,7 @@ const links = [
   { href: '/', text: 'Inicio' },
   { href: '/agenda', text: 'Agenda' },
   { href: '/retos', text: 'Retos' },
+  { href: '/directo', text: 'Directo' },
   { href: '/apis', text: 'APIs' },
   { href: '/slides', text: 'Slides' },
 ];
@@ -35,6 +36,7 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title ? `${title} · ${SITE}` : SITE}</title>
+    <slot name="head" />
   </head>
   <body>
     <header class="site-header">

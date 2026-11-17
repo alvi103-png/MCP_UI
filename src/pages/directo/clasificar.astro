@@ -1,0 +1,291 @@
+---
+// La demo en directo de Jev. El código que se descomenta está en directo/jev/clasificar.js;
+// esta página solo pinta lo que devuelva.
+import { TOKEN_DEL_TALLER } from '../../data/taller';
+import Base from '../../layouts/Base.astro';
+
+const ejemplos = [
+  'El pedido llegó tarde y la caja estaba rota.',
+  '¿Dónde está mi pedido? Lo compré hace una semana.',
+  'Quiero devolver el teclado, no me gusta el tacto.',
+  '¡Me habéis cobrado dos veces! Lo quiero resuelto hoy.',
+  '¿La mochila cabe como equipaje de cabina?',
+  'GANA 5000 € DESDE CASA, haz clic aquí',
+];
+---
+
+<Base title="Clasificar con Jev">
+  <meta slot="head" name="token-taller" content={TOKEN_DEL_TALLER} />
+
+  <h1>Clasificar con Jev</h1>
+  <p id="estado" class="muted" role="status"></p>
+
+  <form id="formulario">
+    <input name="mensaje" value={ejemplos[0]} autocomplete="off" spellcheck="false" aria-label="Mensaje del cliente" />
+    <button type="submit">Clasificar ▸</button>
+  </form>
+
+  <ul class="ejemplos">
+    {ejemplos.slice(1).map((ejemplo) => <li><button type="button" data-ejemplo={ejemplo}>{ejemplo}</button></li>)}
+  </ul>
+
+  <p id="decision" class="decision" hidden></p>
+  <div id="respuestas" aria-live="polite"></div>
+</Base>
+
+<style>
+  h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    margin-bottom: 0.75rem;
+  }
+
+  form {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  input,
+  button {
+    font: inherit;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem 0.9rem;
+  }
+
+  input:focus {
+    border-color: var(--muted);
+    outline: none;
+  }
+
+  button {
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    color: var(--muted);
+    border-color: var(--line);
+  }
+
+  /* Mientras Jev responde */
+  button[aria-busy='true'] {
+    cursor: progress;
+  }
+
+  .ejemplos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    margin: 0.75rem 0 0;
+    padding: 0;
+  }
+
+  .ejemplos button {
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding: 0.2rem 0.6rem;
+  }
+
+  .decision {
+    margin-top: 2.5rem;
+    font-family: var(--pixel);
+    font-size: clamp(1.75rem, 5vw, 2.75rem);
+    line-height: 1.1;
+    color: var(--accent);
+  }
+
+  #respuestas {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2.5rem;
+  }
+
+  #respuestas :global(h2) {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    font-family: var(--mono);
+    font-size: 0.87rem;
+    margin-bottom: 0.6rem;
+  }
+
+  #respuestas :global(ul) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  #respuestas :global(li) {
+    display: grid;
+    grid-template-columns: 9rem 1fr 3.5rem;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.87rem;
+    color: var(--muted);
+  }
+
+  #respuestas :global(li.elegida) {
+    color: var(--fg);
+  }
+
+  #respuestas :global(.barra) {
+    height: 0.5rem;
+    background: var(--surface);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  #respuestas :global(.barra > div) {
+    height: 100%;
+    background: var(--line);
+    transition: width 0.4s steps(8, end);
+  }
+
+  #respuestas :global(li.elegida .barra > div) {
+    background: var(--accent);
+  }
+
+  #respuestas :global(.porcentaje) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .error {
+    color: var(--accent);
+  }
+
+  .aviso {
+    color: #ffb000;
+  }
+</style>
+
+<script>
+  import * as jev from '../../../directo/jev/clasificar.js';
+
+  type Respuesta = {
+    type: 'choice' | 'score' | 'noul';
+    choice?: string;
+    score?: number;
+    noul?: number;
+    legend?: Record<string, string>;
+    probabilities?: Record<string, number>;
+  };
+
+  // Lo que haya descomentado en directo/jev/clasificar.js
+  const { clasificar, decidir } = jev as {
+    clasificar?: (mensaje: string) => Promise<Record<string, Respuesta>>;
+    decidir?: (respuestas: Record<string, Respuesta>) => string;
+  };
+
+  const $estado = document.querySelector<HTMLElement>('#estado')!;
+  const $formulario = document.querySelector<HTMLFormElement>('#formulario')!;
+  const $mensaje = $formulario.querySelector('input')!;
+  const $boton = $formulario.querySelector('button')!;
+  const $decision = document.querySelector<HTMLElement>('#decision')!;
+  const $respuestas = document.querySelector<HTMLElement>('#respuestas')!;
+
+  function h(etiqueta: string, propiedades: Record<string, unknown> = {}, ...hijos: (Node | string)[]) {
+    const $elemento = Object.assign(document.createElement(etiqueta), propiedades);
+    $elemento.append(...hijos);
+    return $elemento;
+  }
+
+  const porcentaje = (valor: number) => `${Math.round(valor * 100)} %`;
+
+  function fila(nombre: string, probabilidad: number, elegida: boolean) {
+    const $barra = h('div', { className: 'barra' }, h('div', { style: `width: ${probabilidad * 100}%` }));
+    return h('li', { className: elegida ? 'elegida' : '' }, nombre, $barra, h('span', { className: 'porcentaje' }, porcentaje(probabilidad)));
+  }
+
+  /** choice: una barra por opción. noul: la probabilidad de «sí». score: una barra por nivel y la media */
+  function pintar(nombre: string, respuesta: Respuesta) {
+    let valor = '';
+    let filas: HTMLElement[] = [];
+
+    if (respuesta.type === 'choice') {
+      valor = respuesta.choice!;
+      filas = Object.entries(respuesta.probabilities ?? {}).map(([opcion, p]) => fila(opcion, p, opcion === respuesta.choice));
+    } else if (respuesta.type === 'noul') {
+      valor = porcentaje(respuesta.noul!);
+      filas = [fila('sí', respuesta.noul!, respuesta.noul! > 0.5)];
+    } else {
+      valor = respuesta.score!.toFixed(1);
+      const elegido = String(Math.round(respuesta.score!));
+      filas = Object.entries(respuesta.probabilities ?? {}).map(([nivel, p]) =>
+        fila(respuesta.legend?.[nivel] ?? nivel, p, nivel === elegido),
+      );
+    }
+
+    return h(
+      'section',
+      {},
+      h('h2', {}, h('code', {}, nombre), h('span', { className: 'muted' }, respuesta.type), h('strong', { className: 'accent' }, valor)),
+      h('ul', {}, ...filas),
+    );
+  }
+
+  function mostrarEstado(texto: string, tipo?: 'error' | 'aviso') {
+    $estado.textContent = texto;
+    $estado.className = tipo ?? 'muted';
+  }
+
+  async function enviar() {
+    const mensaje = $mensaje.value.trim();
+    if (!mensaje) return;
+
+    $boton.disabled = true;
+    $boton.ariaBusy = 'true';
+    mostrarEstado('Jev está decidiendo…');
+    const inicio = performance.now();
+
+    try {
+      const respuestas = await clasificar!(mensaje);
+      mostrarEstado(`${Math.round(performance.now() - inicio)} ms`);
+      $respuestas.replaceChildren(...Object.entries(respuestas).map(([nombre, respuesta]) => pintar(nombre, respuesta)));
+      $decision.hidden = !decidir;
+      if (decidir) $decision.textContent = `→ ${decidir(respuestas)}`;
+    } catch (error) {
+      mostrarEstado(error instanceof Error ? error.message : String(error), 'error');
+    } finally {
+      $boton.disabled = false;
+      $boton.ariaBusy = null;
+    }
+  }
+
+  if (clasificar) {
+    mostrarEstado('Escribe un mensaje de un cliente');
+  } else {
+    $boton.disabled = true;
+    mostrarEstado('Descomenta el PASO 1 en directo/jev/clasificar.js', 'aviso');
+  }
+
+  $formulario.addEventListener('submit', (evento) => {
+    evento.preventDefault();
+    enviar();
+  });
+
+  document.addEventListener('click', (evento) => {
+    const $ejemplo = (evento.target as Element).closest<HTMLElement>('[data-ejemplo]');
+    if (!$ejemplo || !clasificar) return;
+    $mensaje.value = $ejemplo.dataset.ejemplo!;
+    enviar();
+  });
+</script>

@@ -1,0 +1,92 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Las de localhost se arrancan con `npm run dev` en su carpeta y abren el probador del servidor MCP
+const demos = [
+  { bloque: 1, title: 'LaLiga por MCP', href: 'http://localhost:3003', detalle: 'directo/liga/1-mcp' },
+  { bloque: 1, title: 'LaLiga con interfaz', href: 'http://localhost:3003', detalle: 'directo/liga/2-mcp-ui' },
+  { bloque: 1, title: 'La tienda por MCP', href: 'http://localhost:3001', detalle: 'retos/01-mcp-ui' },
+  { bloque: 2, title: 'Entradas del Camp Nou', href: '/directo/entradas', detalle: 'WebMCP' },
+  { bloque: 3, title: 'Clasificar un mensaje', href: '/directo/clasificar', detalle: 'directo/jev/clasificar.js' },
+  { bloque: 3, title: 'Jev juega a Super Mario Bros.', href: '/directo/mario', detalle: 'Jev' },
+  { bloque: 4, title: 'Resumir en el navegador', href: '/directo/resumir', detalle: 'Summarizer' },
+];
+---
+
+<Base title="En directo">
+  <h1>En directo</h1>
+
+  <ol>
+    {
+      demos.map(({ bloque, title, href, detalle }) => (
+        <li>
+          <a href={href}>
+            <span class="n">0{bloque}</span>
+            <h2>{title}</h2>
+            <code class="muted">{href.startsWith('http') ? `${detalle} · ${href.replace('http://', '')}` : detalle}</code>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+</Base>
+
+<style>
+  h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    margin-bottom: 2.5rem;
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li a {
+    display: grid;
+    grid-template-columns: 3rem 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding-block: 1.1rem;
+    border-top: 1px solid var(--line);
+    text-decoration: none;
+  }
+
+  li:last-child a {
+    border-bottom: 1px solid var(--line);
+  }
+
+  li a:hover {
+    color: var(--fg);
+  }
+
+  li a:hover h2 {
+    color: var(--accent);
+  }
+
+  .n {
+    font-family: var(--pixel);
+    font-size: 1.25rem;
+    color: var(--accent);
+  }
+
+  h2 {
+    font-size: 1.35rem;
+  }
+
+  code {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    li a {
+      grid-template-columns: 3rem 1fr;
+    }
+
+    code {
+      grid-column: 2;
+    }
+  }
+</style>

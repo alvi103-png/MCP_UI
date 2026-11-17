@@ -1,4 +1,6 @@
 // @ts-check
+import { createReadStream, existsSync } from 'node:fs';
+import path from 'node:path';
 import { defineConfig, fontProviders } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 
@@ -7,7 +9,73 @@ import cloudflare from '@astrojs/cloudflare';
 // ajustadas para evitar saltos de layout mientras cargan.
 const fallbacks = ['ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'];
 
-// Las páginas se prerenderizan (estáticas). Solo /api/* se ejecuta en el Worker.
+// /directo/mario: la ROM vive en games/ (ignorado por git) y solo la sirve el servidor de desarrollo.
+// En el deploy no está: la página pide arrastrar el .nes y lo guarda en el navegador.
+const MARIO_ROM = 'Super Mario Bros. (World).nes';
+const MARIO_ROM_URL = '/games/super-mario-bros.nes';
+
+function romDeMario() {
+  return {
+    name: 'rom-de-mario',
+    /** @param {{ config: { root: string }, middlewares: { use(fn: (req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse, next: () => void) => void): void } }} server */
+    configureServer(server) {
+      const archivo = path.join(server.config.root, 'games', MARIO_ROM);
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.split('?')[0] !== MARIO_ROM_URL) return next();
+        if (!existsSync(archivo)) {
+          res.statusCode = 404;
+          res.end();
+          return;
+        }
+        res.setHeader('content-type', 'application/octet-stream');
+        res.setHeader('cache-control', 'no-store');
+        createReadStream(archivo).pipe(res);
+      });
+    },
+  };
+}
+
+// El worker de Whisper (voz del Camp Nou) empaqueta onnxruntime-web, cuyo wasm de respaldo
+// (25,6 MiB) supera el límite de archivos de Workers. Transformers.js lo carga siempre desde
+// jsDelivr, así que esa copia no se usa: se quita del build.
+function sinWasmDeOnnx() {
+  return {
+    name: 'sin-wasm-de-onnx',
+    /** @param {unknown} _ @param {Record<string, unknown>} bundle */
+    generateBundle(_, bundle) {
+      for (const nombre of Object.keys(bundle)) {
+        if (/(^|\/)ort-wasm-[^/]*\.wasm$/.test(nombre)) delete bundle[nombre];
+      }
+    },
+  };
+}
+
+// Bug de Astro 7.4 (astro:fonts): cuando el plugin de Cloudflare reinicia Vite (cambios en .dev.vars,
+// wrangler.jsonc, reinicio de workerd…) se reutiliza la misma instancia del plugin de fuentes. El
+// buildStart del servidor nuevo corre ANTES que el buildEnd del viejo, y ese buildEnd vacía el estado
+// compartido: /_astro/fonts/* pasa a dar 404 y la web cae al fallback (Courier). En dev ese buildEnd
+// solo hace limpieza, así que lo saltamos; en el build sigue igual (es el que copia las fuentes a dist).
+function fuentesTrasReiniciar() {
+  const PARCHEADO = Symbol.for('taller:fuentes-tras-reiniciar');
+  return {
+    name: 'fuentes-tras-reiniciar',
+    /** @param {{ plugins: readonly any[] }} config */
+    configResolved(config) {
+      const fuentes = config.plugins.find((p) => p.name === 'astro:fonts');
+      if (typeof fuentes?.buildEnd !== 'function' || fuentes.buildEnd[PARCHEADO]) return;
+      const original = fuentes.buildEnd;
+      /** @this {{ environment: { config: { command: string } } }} @param {unknown[]} args */
+      const buildEnd = function (...args) {
+        if (this.environment.config.command === 'serve') return;
+        return original.apply(this, args);
+      };
+      buildEnd[PARCHEADO] = true;
+      fuentes.buildEnd = buildEnd;
+    },
+  };
+}
+
+// Las páginas se prerenderizan (estáticas). Solo /api/* (y /directo/entradas) se ejecutan en el Worker.
 export default defineConfig({
   adapter: cloudflare(),
   // agenda.html en vez de agenda/index.html: Cloudflare sirve /agenda directamente (200) en lugar de
@@ -17,6 +85,13 @@ export default defineConfig({
   security: { checkOrigin: false },
   markdown: {
     shikiConfig: { theme: 'css-variables' },
+  },
+  vite: {
+    plugins: [romDeMario(), fuentesTrasReiniciar()],
+    // Los workers de Mario (futuros simulados) y de Whisper son módulos ES
+    worker: { format: 'es', plugins: () => [sinWasmDeOnnx()] },
+    // Sin esto, Vite descubre jsnes y transformers.js al abrir la página y recarga a mitad de partida
+    optimizeDeps: { include: ['jsnes', '@huggingface/transformers'] },
   },
   fonts: [
     {

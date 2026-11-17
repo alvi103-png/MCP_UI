@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # artefactos de Playwright MCP
 .playwright-mcp/
+
+# ROM de /directo/mario (nunca en git)
+games/

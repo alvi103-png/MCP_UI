@@ -1,0 +1,3474 @@
+---
+import BackLink from '../../components/directo/BackLink.astro';
+import Layout from '../../layouts/Directo.astro';
+import { buildFixtures, COMPETITIONS, formatEuros, HOME_CREST, MAX_TICKETS, ZONES } from '../../lib/directo/campnou/data.ts';
+
+// Los partidos dependen de la fecha de hoy.
+export const prerender = false;
+
+const fixtures = buildFixtures();
+const next = fixtures[0]!;
+const fromPrice = (prices: Record<string, number>) =>
+	Math.min(...ZONES.filter((zone) => !zone.membersOnly).map((zone) => prices[zone.id]!));
+
+const matchParamDescription =
+	'Id del partido: ' +
+	fixtures.map((f) => `${f.id} = FC Barcelona vs ${f.rival}, ${f.dateLong} a las ${f.time}`).join('; ');
+const zoneParamDescription =
+	'Zona del estadio: ' + ZONES.map((z) => `${z.id} = ${z.name} (${z.detail})`).join('; ');
+---
+
+<Layout title="Entradas · Spotify Camp Nou" description="Compra tus entradas para los partidos del FC Barcelona en el Spotify Camp Nou." icon={HOME_CREST} light>
+	<div class="cn">
+		<div class="utility">
+			<div class="wrap utility-row">
+				<BackLink />
+				<nav aria-label="Sitios del club">
+					<a href="#partidos">FC Barcelona</a>
+					<a href="#tour">Tour</a>
+					<a href="#como-llegar">Cómo llegar</a>
+					<span class="lang">CA · <strong>ES</strong> · EN</span>
+				</nav>
+			</div>
+		</div>
+
+		<header class="nav">
+			<div class="wrap nav-row">
+				<a class="brand" href="#top" aria-label="Spotify Camp Nou, inicio">
+					<img class="brand-emblem" src={HOME_CREST} alt="" />
+					<span class="brand-text">
+						<span class="brand-kicker">Spotify</span>
+						<span class="brand-name">Camp Nou</span>
+					</span>
+				</a>
+				<nav class="nav-links" aria-label="Principal">
+					<a href="#partidos">Partidos</a>
+					<a href="#entradas">Entradas</a>
+					<a href="#tour">Tour</a>
+					<a href="#como-llegar">Cómo llegar</a>
+				</nav>
+				<a class="btn btn-gold nav-cta" href="#entradas">Comprar entradas</a>
+			</div>
+		</header>
+
+		<section class="hero" id="top">
+			<img src="/campnou/hero.webp" alt="El Camp Nou lleno en una noche de partido, con las gradas iluminadas por los móviles" fetchpriority="high" />
+			<div class="hero-shade"></div>
+			<div class="wrap hero-grid">
+				<div class="hero-copy">
+					<p class="eyebrow">Temporada 2026/27</p>
+					<h1>Vive el Camp Nou</h1>
+					<p class="lede">
+						Entradas para LaLiga y la UEFA Champions League en el nuevo Spotify Camp Nou, el estadio más grande de Europa.
+					</p>
+					<div class="hero-actions">
+						<a class="btn btn-gold" href="#entradas">Comprar entradas</a>
+						<a class="btn btn-ghost" href="#partidos">Ver calendario</a>
+					</div>
+				</div>
+				<aside class="next" aria-label="Próximo partido">
+					<p class="next-label">Próximo partido · {COMPETITIONS[next.competition]}</p>
+					<div class="next-teams">
+						<img class="crest" src={HOME_CREST} alt="FC Barcelona" />
+						<span class="vs">vs</span>
+						<img class="crest" src={next.crest} alt={next.rival} />
+					</div>
+					<p class="next-title">FC Barcelona – {next.rival}</p>
+					<p class="next-date">{next.dateLong} · {next.time} h</p>
+					<button class="btn btn-navy buy" type="button" data-buy={next.id}>Entradas desde {formatEuros(fromPrice(next.prices))}</button>
+				</aside>
+			</div>
+		</section>
+
+		<section class="section" id="partidos">
+			<div class="wrap">
+				<div class="section-head">
+					<p class="eyebrow dark">Calendario</p>
+					<h2>Próximos partidos en casa</h2>
+				</div>
+				<ol class="fixtures">
+					{
+						fixtures.map((f) => {
+							const [weekday, day, month] = f.dateLabel.split(' ');
+							return (
+								<li class="fixture" data-competition={f.competition}>
+									<div class="fixture-date">
+										<span class="fixture-day">{day}</span>
+										<span class="fixture-month">{month}</span>
+										<span class="fixture-weekday">
+											{weekday} · {f.time}
+										</span>
+									</div>
+									<div class="fixture-body">
+										<p class="fixture-comp">
+											{COMPETITIONS[f.competition]}
+											{f.tag && <span class="tag">{f.tag}</span>}
+										</p>
+										<p class="fixture-teams">
+											<img class="crest small" src={HOME_CREST} alt="" loading="lazy" />
+											FC Barcelona <span class="dash">–</span> {f.rival}
+											<img class="crest small" src={f.crest} alt="" loading="lazy" />
+										</p>
+									</div>
+									<div class="fixture-buy">
+										<p class:list={['stock', { low: f.status === 'ultimas' }]}>
+											{f.status === 'ultimas' ? 'Últimas entradas' : 'Disponible'}
+										</p>
+										<p class="from">desde <strong>{formatEuros(fromPrice(f.prices))}</strong></p>
+										<button class="btn btn-navy buy" type="button" data-buy={f.id}>Comprar</button>
+									</div>
+								</li>
+							);
+						})
+					}
+				</ol>
+			</div>
+		</section>
+
+		<section class="section tickets" id="entradas">
+			<div class="wrap">
+				<div class="section-head">
+					<p class="eyebrow dark">Venta oficial</p>
+					<h2>Reserva tus entradas</h2>
+					<p class="section-lede">Elige partido y zona en el plano, o pídeselo al asistente virtual.</p>
+					<p id="support-badge" class="support">Comprobando soporte…</p>
+				</div>
+
+				<div class="tickets-grid">
+					<div class="map-card">
+						<svg class="map" viewBox="0 0 400 260" role="group" aria-label="Plano del estadio">
+							<rect x="6" y="6" width="388" height="248" rx="96" class="map-shell" />
+							<path class="zone" data-zone="lateral" tabindex="0" role="button" aria-label="Lateral" d="M104 72H296L324 20H76Z" />
+							<path class="zone" data-zone="tribuna" tabindex="0" role="button" aria-label="Tribuna" d="M104 188H296L324 240H76Z" />
+							<path class="zone" data-zone="gol-nord" tabindex="0" role="button" aria-label="Gol Nord" d="M98 80V180L58 228Q14 130 58 32Z" />
+							<path class="zone" data-zone="gol-sud" tabindex="0" role="button" aria-label="Gol Sud, Grada d'Animació" d="M302 80V180L342 228Q386 130 342 32Z" />
+							<rect class="zone" data-zone="palco-vip" tabindex="0" role="button" aria-label="Palco VIP" x="164" y="193" width="72" height="15" rx="3" />
+							<g class="pitch" aria-hidden="true">
+								<rect x="110" y="80" width="180" height="100" rx="2" class="grass" />
+								<g class="lines">
+									<rect x="116" y="86" width="168" height="88" />
+									<line x1="200" y1="86" x2="200" y2="174" />
+									<circle cx="200" cy="130" r="13" />
+									<rect x="116" y="108" width="24" height="44" />
+									<rect x="260" y="108" width="24" height="44" />
+								</g>
+							</g>
+							<g class="labels" aria-hidden="true">
+								<text x="200" y="50">Lateral</text>
+								<text x="200" y="228">Tribuna</text>
+								<text x="200" y="203.5" class="vip">Palco VIP</text>
+								<text x="62" y="130" transform="rotate(-90 62 130)">Gol Nord</text>
+								<text x="338" y="130" transform="rotate(90 338 130)">Gol Sud · Socios</text>
+							</g>
+						</svg>
+						<ul class="legend" id="legend">
+							{
+								ZONES.map((z) => (
+									<li>
+										<button type="button" data-zone={z.id}>
+											<span class="legend-name">{z.name}</span>
+											<span class="legend-detail">{z.detail}</span>
+											<span class="legend-price" data-price={z.id}>{formatEuros(next.prices[z.id]!)}</span>
+										</button>
+									</li>
+								))
+							}
+						</ul>
+					</div>
+
+					<div id="form-card" class="form-card">
+						<form
+							id="reservationForm"
+							toolname="reservar_entradas_camp_nou"
+							tooldescription="Reserva entradas para un partido del FC Barcelona en el Spotify Camp Nou, Barcelona"
+							novalidate
+						>
+							<fieldset>
+								<legend>1. Partido y zona</legend>
+								<div class="field">
+									<label for="partido">Partido</label>
+									<select id="partido" name="partido" required class="field-input" toolparamdescription={matchParamDescription}>
+										{fixtures.map((f) => <option value={f.id}>FC Barcelona – {f.rival} · {f.dateLabel} · {f.time}</option>)}
+									</select>
+									<p class="error-msg hidden">Elige uno de los partidos a la venta.</p>
+								</div>
+								<div class="grid">
+									<div class="field">
+										<label for="zona">Zona</label>
+										<select id="zona" name="zona" required class="field-input" toolparamdescription={zoneParamDescription}>
+											{ZONES.map((z) => <option value={z.id}>{z.name}</option>)}
+										</select>
+										<p class="error-msg hidden">Elige una zona del estadio.</p>
+									</div>
+									<div class="field">
+										<label for="num-entradas">Entradas</label>
+										<select
+											id="num-entradas"
+											name="entradas"
+											required
+											class="field-input"
+											toolparamdescription={`Número de entradas, de 1 a ${MAX_TICKETS} (en El Clásico, máximo 2 por persona)`}
+										>
+											{Array.from({ length: MAX_TICKETS }, (_, i) => <option value={String(i + 1)} selected={i === 1}>{i + 1}</option>)}
+										</select>
+										<p class="error-msg hidden">Elige cuántas entradas quieres.</p>
+									</div>
+								</div>
+							</fieldset>
+
+							<fieldset>
+								<legend>2. Titular</legend>
+								<div class="field">
+									<label for="nombre">Nombre y apellidos</label>
+									<input id="nombre" name="nombre" type="text" required autocomplete="name" class="field-input" placeholder="Laia Puig Ferrer" toolparamdescription="Nombre y apellidos del titular de las entradas" />
+									<p class="error-msg hidden">Escribe nombre y apellidos.</p>
+								</div>
+								<div class="grid">
+									<div class="field">
+										<label for="email">Email</label>
+										<input id="email" name="email" type="email" required autocomplete="email" class="field-input" placeholder="laia@correo.es" toolparamdescription="Email donde se envían las entradas" />
+										<p class="error-msg hidden">Escribe un email válido.</p>
+									</div>
+									<div class="field">
+										<label for="telefono">Móvil</label>
+										<input id="telefono" name="telefono" type="tel" required autocomplete="tel" class="field-input" placeholder="612 345 678" toolparamdescription="Móvil español de 9 dígitos, con o sin +34" />
+										<p class="error-msg hidden">Escribe un móvil español de 9 dígitos.</p>
+									</div>
+								</div>
+								<div class="field">
+									<label for="socio">Nº de socio <span id="socio-hint">opcional</span></label>
+									<input id="socio" name="socio" type="text" inputmode="numeric" class="field-input" placeholder="Solo para socios del FC Barcelona" toolparamdescription="Número de socio del FC Barcelona (5 a 8 dígitos). Obligatorio para el Gol Sud (Grada d'Animació)" />
+									<p class="error-msg hidden">El número de socio tiene entre 5 y 8 dígitos.</p>
+								</div>
+								<div class="field">
+									<label for="notas">Peticiones <span>opcional</span></label>
+									<textarea id="notas" name="notas" rows="2" class="field-input" placeholder="Movilidad reducida, asientos juntos…" toolparamdescription="Peticiones especiales: accesibilidad, asientos juntos (opcional)"></textarea>
+								</div>
+							</fieldset>
+
+							<div class="summary" aria-live="polite">
+								<div>
+									<p class="summary-match" id="summary-match"></p>
+									<p class="summary-line" id="summary-line"></p>
+								</div>
+								<p class="summary-total"><span>Total</span><strong id="summary-total"></strong></p>
+							</div>
+
+							<button type="submit" id="submit-btn" class="btn btn-gold submit">Reservar entradas</button>
+							<p class="fine">Máximo {MAX_TICKETS} entradas por compra. Las entradas son nominativas y llegan a tu email.</p>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="section feature" id="tour">
+			<div class="wrap feature-grid">
+				<img src="/campnou/interior.webp" alt="Gradas del Camp Nou con el lema «Més que un club»" loading="lazy" />
+				<div>
+					<p class="eyebrow dark">Tour y Museo</p>
+					<h2>Més que un club</h2>
+					<p>
+						Recorre el vestuario, el túnel de jugadores, la sala de prensa y el Museo, con las cinco Copas de Europa del
+						club.
+					</p>
+					<ul class="facts">
+						<li><strong>1957</strong> inaugurado</li>
+						<li><strong>105.000</strong> localidades</li>
+						<li><strong>Nº 1</strong> en aforo de Europa</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+
+		<section class="section access" id="como-llegar">
+			<div class="wrap">
+				<div class="section-head">
+					<p class="eyebrow dark">Cómo llegar</p>
+					<h2>C. d'Arístides Maillol, 12 · Barcelona</h2>
+				</div>
+				<div class="access-grid">
+					<article>
+						<p class="access-kind">Metro</p>
+						<p class="access-main">Les Corts · Palau Reial</p>
+						<p>Línea 3 (verde)</p>
+					</article>
+					<article>
+						<p class="access-kind">Metro</p>
+						<p class="access-main">Collblanc · Badal</p>
+						<p>Línea 5 (azul)</p>
+					</article>
+					<article>
+						<p class="access-kind">Tranvía</p>
+						<p class="access-main">Palau Reial</p>
+						<p>T1 · T2 · T3, a 10 minutos andando</p>
+					</article>
+					<article>
+						<p class="access-kind">Puertas</p>
+						<p class="access-main">90 min antes</p>
+						<p>Accesos por Arístides Maillol y Travessera de les Corts</p>
+					</article>
+				</div>
+				<img class="exterior" src="/campnou/exterior.webp" alt="Vista aérea del Camp Nou y sus gradas azulgranas" loading="lazy" />
+			</div>
+		</section>
+
+		<footer class="foot">
+			<div class="wrap foot-grid">
+				<div class="foot-brand">
+					<img class="foot-emblem" src={HOME_CREST} alt="" loading="lazy" />
+					<p>Spotify Camp Nou<br />C. d'Arístides Maillol, 12<br />08028 Barcelona</p>
+				</div>
+				<nav aria-label="Estadio">
+					<p>Estadio</p>
+					<a href="#entradas">Entradas</a>
+					<a href="#tour">Tour</a>
+					<a href="#como-llegar">Cómo llegar</a>
+				</nav>
+				<nav aria-label="Ayuda">
+					<p>Ayuda</p>
+					<a href="#entradas">Preguntas frecuentes</a>
+					<a href="#entradas">Accesibilidad</a>
+					<a href="#entradas">Contacto</a>
+				</nav>
+			</div>
+			<div class="wrap foot-legal">
+				<p>
+					Web de demostración para una charla sobre WebMCP. No es la web oficial del FC Barcelona y no vende entradas
+					reales.
+				</p>
+				<p>
+					Fotos vía Wikimedia Commons: JaflaumS05 (CC BY-SA 4.0), Luis Miguel Bugallo Sánchez (CC BY-SA 3.0),
+					Oh-Barcelona.com (CC BY 2.0). Escudos: marcas de sus clubes, vía Wikipedia.
+				</p>
+			</div>
+		</footer>
+	</div>
+
+	<button id="chat-fab" type="button" aria-label="Abrir el asistente virtual">
+		<svg id="fab-icon-open" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3 0-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z" /></svg>
+		<svg id="fab-icon-close" class="hidden" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+		<span>Asistente</span>
+	</button>
+
+	<div id="chat-panel" class="panel hidden" role="dialog" aria-label="Asistente virtual del Spotify Camp Nou">
+		<div class="panel-head">
+			<img class="panel-emblem" src={HOME_CREST} alt="" />
+			<div class="panel-title">
+				<p>Asistente virtual</p>
+				<p id="agent-status">En línea</p>
+			</div>
+			<span class="panel-badge" id="panel-badge">WebMCP</span>
+			<button id="reset-chat" type="button">Reiniciar</button>
+		</div>
+		<div id="live-stage" hidden data-state="connecting">
+			<div class="live-orb" aria-hidden="true">
+				<span class="live-wave w1"></span>
+				<span class="live-wave w2"></span>
+				<span class="live-wave w3"></span>
+				<span class="live-user"></span>
+				<span class="live-core"><img src={HOME_CREST} alt="" /></span>
+			</div>
+			<p id="live-title" aria-live="polite">Conectando…</p>
+			<p id="live-sub">GPT-Live · gpt-6-luna rellena el formulario con WebMCP</p>
+		</div>
+		<div id="chat-log"></div>
+		<div class="panel-foot">
+			<div id="suggestions"></div>
+			<form id="chat-form">
+				<textarea id="chat-input" rows="1" aria-label="Mensaje para el asistente" placeholder="Escribe tu mensaje…"></textarea>
+				<button id="voice-btn" type="button" aria-label="Hablar con el asistente" title="Modo voz">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></svg>
+				</button>
+				<button id="live-btn" type="button" aria-label="Conversación en vivo con GPT-Live" title="En vivo (GPT-Live)">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4" /></svg>
+				</button>
+				<button id="send-btn" type="submit">Enviar</button>
+			</form>
+			<div id="live-controls" hidden>
+				<button id="live-mute" type="button" aria-pressed="false">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></svg>
+					<span>Silenciar</span>
+				</button>
+				<button id="live-end" type="button">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 14.5c4.7-4.2 12.3-4.2 17 0l-2.3 2.3-3.3-1.6v-2.4a11 11 0 0 0-5.8 0v2.4l-3.3 1.6z" /></svg>
+					<span>Colgar</span>
+				</button>
+			</div>
+			<div id="voice-bar" hidden data-state="off">
+				<button id="voice-orb" type="button" aria-label="Modo voz">
+					<span class="orb-ring" aria-hidden="true"></span>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" /></svg>
+				</button>
+				<div class="voice-copy" aria-live="polite">
+					<p id="voice-title">Cargando Whisper…</p>
+					<p id="voice-sub">Whisper base · WebGPU · en tu navegador</p>
+					<div id="voice-progress" hidden><i></i></div>
+				</div>
+				<button id="voice-exit" type="button" title="Volver al teclado">Teclado</button>
+			</div>
+		</div>
+	</div>
+
+	<dialog id="booking-dialog">
+		<div class="ticket">
+			<div class="ticket-head">
+				<img class="ticket-emblem" src={HOME_CREST} alt="" />
+				<div>
+					<p class="ticket-kicker">Reserva confirmada</p>
+					<p class="ticket-code" id="ticket-code"></p>
+				</div>
+			</div>
+			<div class="ticket-body">
+				<div class="ticket-crests" aria-hidden="true">
+					<img src={HOME_CREST} alt="" />
+					<span>vs</span>
+					<img id="ticket-rival-crest" src={next.crest} alt="" />
+				</div>
+				<p class="ticket-comp" id="ticket-comp"></p>
+				<p class="ticket-match" id="ticket-match"></p>
+				<p class="ticket-date" id="ticket-date"></p>
+				<dl class="ticket-seats">
+					<div><dt>Zona</dt><dd id="ticket-zone"></dd></div>
+					<div><dt>Puerta</dt><dd id="ticket-gate"></dd></div>
+					<div><dt>Sector</dt><dd id="ticket-sector"></dd></div>
+					<div><dt>Fila</dt><dd id="ticket-row"></dd></div>
+					<div><dt>Asientos</dt><dd id="ticket-seat"></dd></div>
+					<div><dt>Total</dt><dd id="ticket-total"></dd></div>
+				</dl>
+			</div>
+			<div class="ticket-foot">
+				<div class="qr" id="ticket-qr"></div>
+				<p id="modal-details"></p>
+			</div>
+			<button id="close-dialog-btn" type="button" class="btn btn-navy">Listo</button>
+		</div>
+	</dialog>
+
+	<script type="application/json" id="fixtures-data" set:html={JSON.stringify(fixtures)} />
+</Layout>
+
+<style>
+	@font-face {
+		font-family: 'Barlow';
+		src: url('../../assets/fonts/Barlow-400-latin.woff2') format('woff2');
+		font-weight: 400;
+		font-display: swap;
+	}
+	@font-face {
+		font-family: 'Barlow';
+		src: url('../../assets/fonts/Barlow-500-latin.woff2') format('woff2');
+		font-weight: 500;
+		font-display: swap;
+	}
+	@font-face {
+		font-family: 'Barlow';
+		src: url('../../assets/fonts/Barlow-600-latin.woff2') format('woff2');
+		font-weight: 600;
+		font-display: swap;
+	}
+	@font-face {
+		font-family: 'Barlow';
+		src: url('../../assets/fonts/Barlow-700-latin.woff2') format('woff2');
+		font-weight: 700;
+		font-display: swap;
+	}
+	@font-face {
+		font-family: 'Barlow Condensed';
+		src: url('../../assets/fonts/BarlowCondensed-600-latin.woff2') format('woff2');
+		font-weight: 600;
+		font-display: swap;
+	}
+	@font-face {
+		font-family: 'Barlow Condensed';
+		src: url('../../assets/fonts/BarlowCondensed-700-latin.woff2') format('woff2');
+		font-weight: 700;
+		font-display: swap;
+	}
+	@font-face {
+		font-family: 'Barlow Condensed';
+		src: url('../../assets/fonts/BarlowCondensed-800-latin.woff2') format('woff2');
+		font-weight: 800;
+		font-display: swap;
+	}
+
+	:global(html[data-theme='light']) {
+		scroll-behavior: smooth;
+		scroll-padding-top: 5rem;
+	}
+
+	:global(body:has(.cn)) {
+		--navy: #0c1b4d;
+		--navy-2: #16296b;
+		--royal: #004d98;
+		--grana: #a50044;
+		--gold: #edbb00;
+		--gold-2: #d4a700;
+		--mist: #f3f5f9;
+		--line: #e1e6ee;
+		--ink: #0c1b4d;
+		--soft: #5b6477;
+		--sans: 'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+		--display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+		font-family: var(--sans);
+	}
+
+	.cn {
+		color: var(--ink);
+		font-family: var(--sans);
+		font-size: 1rem;
+		line-height: 1.5;
+	}
+
+	.wrap {
+		width: min(100% - 2.5rem, 76rem);
+		margin-inline: auto;
+	}
+
+	.hidden {
+		display: none !important;
+	}
+
+	/* ---------- Cabecera ---------- */
+	.utility {
+		background: var(--navy);
+		border-bottom: 4px solid;
+		border-image: repeating-linear-gradient(90deg, var(--royal) 0 3rem, var(--grana) 3rem 6rem) 1;
+		color: #c9d3e6;
+		font-size: 0.75rem;
+	}
+	.utility-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		min-height: 2.25rem;
+	}
+	.utility nav {
+		display: flex;
+		gap: 1.5rem;
+	}
+	.utility a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.utility a:hover {
+		color: #fff;
+	}
+	.lang strong {
+		color: #fff;
+	}
+
+	.nav {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		background: rgb(255 255 255 / 96%);
+		backdrop-filter: blur(10px);
+		border-bottom: 1px solid var(--line);
+	}
+	.nav-row {
+		display: flex;
+		align-items: center;
+		gap: 2rem;
+		min-height: 4.5rem;
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		color: var(--navy);
+		text-decoration: none;
+	}
+	.brand-emblem {
+		width: auto;
+		height: 3rem;
+	}
+	.brand-text {
+		display: grid;
+		line-height: 1;
+		text-transform: uppercase;
+		font-family: var(--display);
+	}
+	.brand-kicker {
+		font-weight: 600;
+		font-size: 0.8rem;
+		letter-spacing: 0.22em;
+		color: var(--soft);
+	}
+	.brand-name {
+		font-weight: 800;
+		font-size: 1.45rem;
+		letter-spacing: 0.02em;
+	}
+	.nav-links {
+		display: flex;
+		gap: 1.75rem;
+		margin-left: auto;
+	}
+	.nav-links a {
+		position: relative;
+		color: var(--navy);
+		font-weight: 600;
+		font-size: 0.95rem;
+		text-decoration: none;
+	}
+	.nav-links a::after {
+		content: '';
+		position: absolute;
+		inset: auto 0 -0.5rem;
+		height: 3px;
+		background: var(--grana);
+		transform: scaleX(0);
+		transition: transform 0.2s;
+	}
+	.nav-links a:hover::after {
+		transform: scaleX(1);
+	}
+
+	/* ---------- Botones ---------- */
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		min-height: 2.75rem;
+		padding: 0 1.4rem;
+		border: 0;
+		border-radius: 999px;
+		font-family: var(--sans);
+		font-weight: 700;
+		font-size: 0.9rem;
+		letter-spacing: 0.02em;
+		text-decoration: none;
+		cursor: pointer;
+		transition:
+			background 0.15s,
+			color 0.15s,
+			transform 0.15s;
+	}
+	.btn:active {
+		transform: translateY(1px);
+	}
+	.btn:focus-visible {
+		outline: 3px solid var(--royal);
+		outline-offset: 2px;
+	}
+	.btn-gold {
+		background: var(--gold);
+		color: var(--navy);
+	}
+	.btn-gold:hover {
+		background: var(--gold-2);
+	}
+	.btn-navy {
+		background: var(--navy);
+		color: #fff;
+	}
+	.btn-navy:hover {
+		background: var(--royal);
+	}
+	.btn-ghost {
+		background: rgb(255 255 255 / 12%);
+		color: #fff;
+		box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 70%);
+	}
+	.btn-ghost:hover {
+		background: rgb(255 255 255 / 22%);
+	}
+
+	/* ---------- Hero ---------- */
+	.hero {
+		position: relative;
+		display: grid;
+		align-items: end;
+		min-height: min(78vh, 46rem);
+		color: #fff;
+		background: var(--navy);
+		overflow: hidden;
+	}
+	.hero > img {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		object-position: center 62%;
+	}
+	.hero-shade {
+		position: absolute;
+		inset: 0;
+		background:
+			linear-gradient(90deg, rgb(10 20 60 / 88%) 0%, rgb(10 20 60 / 55%) 48%, rgb(165 0 68 / 18%) 100%),
+			linear-gradient(0deg, rgb(10 20 60 / 70%) 0%, transparent 45%);
+	}
+	.hero-grid {
+		position: relative;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 22rem;
+		align-items: end;
+		gap: 2rem;
+		padding-block: 5rem 3.5rem;
+	}
+	.eyebrow {
+		margin: 0 0 0.75rem;
+		font-family: var(--display);
+		font-weight: 700;
+		font-size: 0.95rem;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+		color: var(--gold);
+	}
+	.eyebrow.dark {
+		color: var(--royal);
+	}
+	h1,
+	h2 {
+		margin: 0;
+		font-family: var(--display);
+		font-weight: 800;
+		text-transform: uppercase;
+		line-height: 0.92;
+		letter-spacing: 0.005em;
+	}
+	h1 {
+		font-size: clamp(3.4rem, 8vw, 6.5rem);
+	}
+	.lede {
+		max-width: 34rem;
+		margin: 1.25rem 0 0;
+		font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+		color: #e4e9f3;
+	}
+	.hero-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-top: 2rem;
+	}
+
+	.next {
+		padding: 1.4rem;
+		border-radius: 14px;
+		background: #fff;
+		color: var(--ink);
+		box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
+	}
+	.next-label {
+		margin: 0;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--soft);
+	}
+	.next-teams {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1rem;
+		margin: 1.1rem 0 0.8rem;
+	}
+	.vs {
+		font-family: var(--display);
+		font-weight: 700;
+		color: var(--soft);
+		text-transform: uppercase;
+	}
+	.next-title {
+		margin: 0;
+		text-align: center;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.6rem;
+		text-transform: uppercase;
+		line-height: 1;
+	}
+	.next-date {
+		margin: 0.4rem 0 1.1rem;
+		text-align: center;
+		color: var(--soft);
+		font-weight: 500;
+	}
+	.next-date::first-letter {
+		text-transform: uppercase;
+	}
+	.next .btn {
+		width: 100%;
+	}
+
+	.crest {
+		width: 4rem;
+		height: 4rem;
+		object-fit: contain;
+	}
+	.crest.small {
+		width: 2.2rem;
+		height: 2.2rem;
+	}
+
+	/* ---------- Secciones ---------- */
+	.section {
+		padding-block: clamp(3.5rem, 7vw, 6rem);
+	}
+	.section-head {
+		margin-bottom: 2.25rem;
+	}
+	.section-head h2,
+	.feature h2 {
+		font-size: clamp(2.3rem, 4.5vw, 3.4rem);
+		color: var(--navy);
+	}
+	.section-lede {
+		margin: 0.8rem 0 0;
+		color: var(--soft);
+		font-size: 1.1rem;
+	}
+	.support {
+		display: inline-block;
+		margin: 0.8rem 0 0;
+		padding: 0.2rem 0.7rem;
+		border-radius: 999px;
+		background: #e8f0fb;
+		color: var(--royal);
+		font-size: 0.75rem;
+		font-weight: 700;
+	}
+	.support[hidden] {
+		display: none;
+	}
+
+	.fixtures {
+		display: grid;
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.fixture {
+		display: grid;
+		grid-template-columns: 7rem minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 1.5rem;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--line);
+		border-radius: 12px;
+		background: #fff;
+		transition:
+			border-color 0.15s,
+			box-shadow 0.15s;
+	}
+	.fixture:hover {
+		border-color: #c8d2e3;
+		box-shadow: 0 10px 30px rgb(12 27 77 / 8%);
+	}
+	.fixture-date {
+		display: grid;
+		justify-items: center;
+		padding-right: 1.25rem;
+		border-right: 1px solid var(--line);
+		line-height: 1;
+		font-family: var(--display);
+		text-transform: uppercase;
+	}
+	.fixture-day {
+		font-weight: 800;
+		font-size: 2.4rem;
+		color: var(--navy);
+	}
+	.fixture-month {
+		font-weight: 700;
+		font-size: 1rem;
+		letter-spacing: 0.1em;
+		color: var(--royal);
+	}
+	.fixture-weekday {
+		margin-top: 0.35rem;
+		font-weight: 600;
+		font-size: 0.82rem;
+		letter-spacing: 0.06em;
+		color: var(--soft);
+	}
+	.fixture-comp {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+		margin: 0 0 0.45rem;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--soft);
+	}
+	.fixture[data-competition='ucl'] .fixture-comp {
+		color: #1b3fa0;
+	}
+	.tag {
+		padding: 0.15rem 0.55rem;
+		border-radius: 999px;
+		background: var(--grana);
+		color: #fff;
+		letter-spacing: 0.06em;
+	}
+	.fixture-teams {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+		margin: 0;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+		text-transform: uppercase;
+		line-height: 1;
+		color: var(--navy);
+	}
+	.dash {
+		color: var(--soft);
+	}
+	.fixture-buy {
+		display: grid;
+		justify-items: end;
+		gap: 0.25rem;
+		text-align: right;
+	}
+	.fixture-buy p {
+		margin: 0;
+	}
+	.stock {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: #0f7a3d;
+	}
+	.stock.low {
+		color: #c2410c;
+	}
+	.from {
+		font-size: 0.85rem;
+		color: var(--soft);
+	}
+	.from strong {
+		font-size: 1.1rem;
+		color: var(--navy);
+	}
+	.fixture-buy .btn {
+		margin-top: 0.35rem;
+		min-height: 2.4rem;
+	}
+
+	/* ---------- Entradas ---------- */
+	.tickets {
+		background: var(--mist);
+	}
+	.tickets-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+		gap: 1.5rem;
+		align-items: start;
+	}
+	.map-card,
+	.form-card {
+		border-radius: 16px;
+		background: #fff;
+		box-shadow: 0 1px 0 var(--line), 0 18px 40px rgb(12 27 77 / 6%);
+	}
+	.map-card {
+		position: sticky;
+		top: 6rem;
+		padding: 1.5rem;
+	}
+	.map {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.map-shell {
+		fill: #e6ebf3;
+	}
+	.zone {
+		fill: #c3cee0;
+		stroke: #fff;
+		stroke-width: 2;
+		cursor: pointer;
+		transition: fill 0.15s;
+		outline: none;
+	}
+	.zone:hover,
+	.zone:focus-visible {
+		fill: #93a9cc;
+	}
+	.zone[data-selected='true'] {
+		fill: var(--gold);
+	}
+	.zone[data-zone='palco-vip'] {
+		fill: var(--navy-2);
+	}
+	.zone[data-zone='palco-vip']:hover {
+		fill: var(--royal);
+	}
+	.zone[data-zone='palco-vip'][data-selected='true'] {
+		fill: var(--gold);
+	}
+	.grass {
+		fill: #2d8a4a;
+	}
+	.lines * {
+		fill: none;
+		stroke: rgb(255 255 255 / 75%);
+		stroke-width: 1.2;
+	}
+	.labels text {
+		font-family: var(--display);
+		font-weight: 700;
+		font-size: 11px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		text-anchor: middle;
+		dominant-baseline: middle;
+		fill: var(--navy);
+		pointer-events: none;
+	}
+	.labels .vip {
+		font-size: 8px;
+		fill: #fff;
+	}
+	.map:has([data-zone='palco-vip'][data-selected='true']) .labels .vip {
+		fill: var(--navy);
+	}
+
+	.legend {
+		display: grid;
+		gap: 0.35rem;
+		margin: 1.25rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+	.legend button {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		width: 100%;
+		padding: 0.6rem 0.8rem;
+		border: 1px solid var(--line);
+		border-radius: 10px;
+		background: #fff;
+		color: var(--ink);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+	.legend button:hover {
+		border-color: #b8c5da;
+	}
+	.legend button[aria-pressed='true'] {
+		border-color: var(--gold);
+		background: #fff8e1;
+		box-shadow: inset 4px 0 0 var(--gold);
+	}
+	.legend-name {
+		font-weight: 700;
+	}
+	.legend-detail {
+		grid-column: 1;
+		font-size: 0.8rem;
+		color: var(--soft);
+	}
+	.legend-price {
+		grid-row: 1 / span 2;
+		grid-column: 2;
+		align-self: center;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.35rem;
+		color: var(--navy);
+	}
+
+	.form-card {
+		padding: 1.75rem;
+		transition: box-shadow 0.2s;
+	}
+	:global(#form-card.tool-active) {
+		box-shadow:
+			0 0 0 3px var(--gold),
+			0 18px 40px rgb(12 27 77 / 12%);
+	}
+	fieldset {
+		margin: 0 0 1.25rem;
+		padding: 0;
+		border: 0;
+	}
+	legend {
+		margin-bottom: 0.4rem;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.25rem;
+		text-transform: uppercase;
+		color: var(--navy);
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0 1rem;
+	}
+	.field {
+		display: grid;
+		gap: 0.3rem;
+		margin-top: 0.75rem;
+	}
+	label {
+		font-size: 0.78rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		color: var(--navy);
+	}
+	label span {
+		margin-left: 0.25rem;
+		font-weight: 500;
+		color: var(--soft);
+	}
+	:global(#socio-hint.required) {
+		color: #c2410c;
+		font-weight: 700;
+	}
+	.field-input {
+		width: 100%;
+		min-height: 2.75rem;
+		padding: 0.55rem 0.8rem;
+		border: 1.5px solid #cfd7e4;
+		border-radius: 10px;
+		background: #fff;
+		color: var(--ink);
+		font: inherit;
+		transition:
+			border-color 0.15s,
+			background 0.3s;
+	}
+	textarea.field-input {
+		resize: vertical;
+	}
+	.field-input:focus {
+		outline: none;
+		border-color: var(--royal);
+		box-shadow: 0 0 0 3px rgb(0 77 152 / 15%);
+	}
+	:global(.field-input.tool-filling) {
+		background: #fff4cc;
+		border-color: var(--gold);
+	}
+	:global(.field-input.invalid) {
+		border-color: #dc2626;
+	}
+	.error-msg {
+		margin: 0;
+		font-size: 0.78rem;
+		font-weight: 600;
+		color: #dc2626;
+	}
+
+	.summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem 1.1rem;
+		border-radius: 12px;
+		background: var(--navy);
+		color: #fff;
+	}
+	.summary p {
+		margin: 0;
+	}
+	.summary-match {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.15rem;
+		text-transform: uppercase;
+		line-height: 1.1;
+	}
+	.summary-line {
+		font-size: 0.82rem;
+		color: #c9d3e6;
+	}
+	.summary-total {
+		display: grid;
+		justify-items: end;
+		line-height: 1;
+	}
+	.summary-total span {
+		font-size: 0.7rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #c9d3e6;
+	}
+	.summary-total strong {
+		margin-top: 0.25rem;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 2rem;
+		color: var(--gold);
+	}
+	.submit {
+		width: 100%;
+		min-height: 3.2rem;
+		margin-top: 1rem;
+		font-size: 1rem;
+	}
+	:global(#submit-btn.tool-submit-active) {
+		box-shadow: 0 0 0 4px rgb(237 187 0 / 45%);
+	}
+	.fine {
+		margin: 0.75rem 0 0;
+		font-size: 0.78rem;
+		color: var(--soft);
+		text-align: center;
+	}
+
+	/* ---------- Tour y acceso ---------- */
+	.feature-grid {
+		display: grid;
+		grid-template-columns: 1.1fr 1fr;
+		gap: clamp(1.5rem, 4vw, 4rem);
+		align-items: center;
+	}
+	.feature img,
+	.exterior {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: 16px;
+		object-fit: cover;
+	}
+	.feature img {
+		aspect-ratio: 4 / 3;
+	}
+	.feature p {
+		color: var(--soft);
+		font-size: 1.1rem;
+	}
+	.facts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.75rem;
+		margin: 1.5rem 0 0;
+		padding: 0;
+		list-style: none;
+		color: var(--soft);
+	}
+	.facts strong {
+		display: block;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 2rem;
+		line-height: 1;
+		text-transform: uppercase;
+		color: var(--navy);
+	}
+
+	.access {
+		background: var(--mist);
+	}
+	.access-grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.75rem;
+		margin-bottom: 1.5rem;
+	}
+	.access article {
+		padding: 1.25rem;
+		border-radius: 12px;
+		background: #fff;
+		box-shadow: 0 1px 0 var(--line);
+	}
+	.access p {
+		margin: 0;
+		color: var(--soft);
+	}
+	.access-kind {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+	.access .access-main {
+		margin: 0.35rem 0 0.15rem;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.45rem;
+		text-transform: uppercase;
+		color: var(--navy);
+	}
+	.exterior {
+		aspect-ratio: 21 / 8;
+	}
+
+	/* ---------- Footer ---------- */
+	.foot {
+		padding-block: 3.5rem 2rem;
+		background: var(--navy);
+		color: #c9d3e6;
+		font-size: 0.9rem;
+	}
+	.foot-grid {
+		display: grid;
+		grid-template-columns: 2fr 1fr 1fr;
+		gap: 2rem;
+	}
+	.foot-brand {
+		display: flex;
+		gap: 1rem;
+		align-items: flex-start;
+	}
+	.foot-emblem {
+		width: auto;
+		height: 3.6rem;
+		flex: none;
+	}
+	.foot p {
+		margin: 0;
+	}
+	.foot nav {
+		display: grid;
+		align-content: start;
+		gap: 0.5rem;
+	}
+	.foot nav p {
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		font-size: 0.75rem;
+		color: #fff;
+	}
+	.foot a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.foot a:hover {
+		color: var(--gold);
+	}
+	.foot-legal {
+		display: grid;
+		gap: 0.25rem;
+		margin-top: 2.5rem;
+		padding-top: 1.25rem;
+		border-top: 1px solid rgb(255 255 255 / 12%);
+		font-size: 0.75rem;
+		color: #8e9ab3;
+	}
+
+	/* ---------- Asistente ---------- */
+	#chat-fab {
+		position: fixed;
+		right: 1.25rem;
+		bottom: 1.25rem;
+		z-index: 30;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		height: 3.5rem;
+		padding: 0 1.3rem 0 1.1rem;
+		border: 0;
+		border-radius: 999px;
+		background: var(--navy);
+		color: #fff;
+		box-shadow: 0 14px 34px rgb(12 27 77 / 35%);
+		font-family: var(--sans);
+		font-weight: 700;
+		font-size: 0.95rem;
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	#chat-fab:hover {
+		background: var(--royal);
+	}
+	#chat-fab svg {
+		width: 1.3rem;
+		height: 1.3rem;
+		fill: var(--gold);
+		stroke: var(--gold);
+		stroke-width: 2;
+		stroke-linecap: round;
+	}
+	#fab-icon-open {
+		stroke: none;
+	}
+
+	.panel {
+		position: fixed;
+		z-index: 30;
+		right: 1.25rem;
+		bottom: 5.5rem;
+		display: flex;
+		flex-direction: column;
+		width: min(25rem, calc(100vw - 2rem));
+		height: min(38rem, calc(100dvh - 7.5rem));
+		border-radius: 18px;
+		background: #fff;
+		color: var(--ink);
+		box-shadow: 0 28px 70px rgb(12 27 77 / 30%);
+		overflow: hidden;
+		font-family: var(--sans);
+	}
+	.panel-head {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		padding: 0.85rem 1rem;
+		background: var(--navy);
+		color: #fff;
+	}
+	.panel-emblem {
+		width: auto;
+		height: 2.2rem;
+	}
+	.panel-title {
+		flex: 1;
+		min-width: 0;
+	}
+	.panel-title p {
+		margin: 0;
+		line-height: 1.2;
+	}
+	.panel-title p:first-child {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.15rem;
+		text-transform: uppercase;
+	}
+	#agent-status {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.75rem;
+		color: #c9d3e6;
+	}
+	#agent-status::before {
+		content: '';
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 50%;
+		background: #22c55e;
+	}
+	:global(#agent-status[data-busy='true'])::before {
+		background: var(--gold);
+		animation: cn-pulse 0.8s ease-in-out infinite alternate;
+	}
+	.panel-badge {
+		padding: 0.15rem 0.5rem;
+		border-radius: 999px;
+		background: rgb(237 187 0 / 18%);
+		color: var(--gold);
+		font-size: 0.65rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	#reset-chat {
+		border: 0;
+		background: none;
+		color: #c9d3e6;
+		font: inherit;
+		font-size: 0.75rem;
+		cursor: pointer;
+	}
+	#reset-chat:hover {
+		color: #fff;
+	}
+	#chat-log {
+		flex: 1;
+		overflow: auto;
+		padding: 1rem;
+		background: var(--mist);
+	}
+	:global(.cn-row) {
+		display: flex;
+		margin: 0.45rem 0;
+	}
+	:global(.cn-row.end) {
+		justify-content: flex-end;
+	}
+	:global(.cn-bubble) {
+		max-width: 86%;
+		padding: 0.6rem 0.85rem;
+		border-radius: 16px;
+		font-size: 0.93rem;
+		line-height: 1.45;
+	}
+	:global(.cn-bubble p) {
+		margin: 0.2rem 0;
+	}
+	:global(.cn-bubble ul),
+	:global(.cn-bubble ol) {
+		margin: 0.3rem 0;
+		padding-left: 1.2rem;
+	}
+	:global(.cn-bubble.user) {
+		border-bottom-right-radius: 4px;
+		background: var(--royal);
+		color: #fff;
+	}
+	:global(.cn-bubble.agent) {
+		border-bottom-left-radius: 4px;
+		background: #fff;
+		color: var(--ink);
+		box-shadow: 0 1px 0 var(--line);
+	}
+	:global(.cn-bubble.error) {
+		background: #fef2f2;
+		color: #991b1b;
+	}
+	:global(.cn-bubble.error small) {
+		display: block;
+		margin-top: 0.25rem;
+		font-family: ui-monospace, monospace;
+		font-size: 0.7rem;
+		word-break: break-all;
+	}
+	:global(.cn-thinking) {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.55rem 0.8rem;
+		border-radius: 16px;
+		background: #fff;
+		box-shadow: 0 1px 0 var(--line);
+		font-size: 0.8rem;
+		color: var(--soft);
+	}
+	:global(.cn-dots) {
+		display: flex;
+		gap: 0.2rem;
+	}
+	:global(.cn-dots i) {
+		width: 0.4rem;
+		height: 0.4rem;
+		border-radius: 50%;
+		background: var(--royal);
+		animation: cn-pulse 0.7s ease-in-out infinite alternate;
+	}
+	:global(.cn-dots i:nth-child(2)) {
+		animation-delay: 0.15s;
+	}
+	:global(.cn-dots i:nth-child(3)) {
+		animation-delay: 0.3s;
+	}
+	:global(.cn-elapsed) {
+		font-variant-numeric: tabular-nums;
+		color: #94a3b8;
+	}
+	:global(.cn-chip) {
+		width: 100%;
+		border: 1px solid #cfd9ea;
+		border-radius: 12px;
+		background: #fff;
+		overflow: hidden;
+		font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+		font-size: 0.7rem;
+	}
+	:global(.cn-chip-head) {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		padding: 0.45rem 0.7rem;
+		background: #eef3fb;
+		color: var(--royal);
+	}
+	:global(.cn-chip-head strong) {
+		color: var(--navy);
+	}
+	:global(.cn-chip-dot) {
+		width: 0.45rem;
+		height: 0.45rem;
+		border-radius: 50%;
+		background: var(--gold);
+		animation: cn-pulse 0.7s ease-in-out infinite alternate;
+	}
+	:global(.cn-chip-dot.done) {
+		background: #22c55e;
+		animation: none;
+	}
+	:global(.cn-chip-dot.fail) {
+		background: #dc2626;
+		animation: none;
+	}
+	:global(.cn-chip pre) {
+		margin: 0;
+		padding: 0.5rem 0.7rem 0;
+		white-space: pre-wrap;
+		word-break: break-all;
+		color: #0f5132;
+	}
+	:global(.cn-chip-result) {
+		padding: 0.4rem 0.7rem 0.55rem;
+		color: var(--soft);
+	}
+	:global(.cn-chip-result.fail) {
+		color: #b91c1c;
+	}
+	.panel-foot {
+		padding: 0.75rem;
+		border-top: 1px solid var(--line);
+		background: #fff;
+	}
+	#suggestions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin-bottom: 0.6rem;
+	}
+	#suggestions:empty {
+		display: none;
+	}
+	:global(.cn-suggest) {
+		padding: 0.35rem 0.7rem;
+		border: 1px solid #cfd9ea;
+		border-radius: 999px;
+		background: #fff;
+		color: var(--royal);
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 600;
+		text-align: left;
+		cursor: pointer;
+	}
+	:global(.cn-suggest:hover) {
+		border-color: var(--royal);
+		background: #eef3fb;
+	}
+	#chat-form[hidden] {
+		display: none;
+	}
+	#chat-form {
+		display: flex;
+		gap: 0.45rem;
+		align-items: end;
+	}
+	#chat-input {
+		flex: 1;
+		max-height: 7rem;
+		padding: 0.6rem 0.8rem;
+		border: 1.5px solid #cfd7e4;
+		border-radius: 12px;
+		background: #fff;
+		color: var(--ink);
+		font: inherit;
+		font-size: 0.93rem;
+		resize: none;
+	}
+	#chat-input:focus {
+		outline: none;
+		border-color: var(--royal);
+	}
+	#send-btn {
+		height: 2.6rem;
+		padding: 0 1rem;
+		border: 0;
+		border-radius: 999px;
+		background: var(--gold);
+		color: var(--navy);
+		font: inherit;
+		font-weight: 700;
+		cursor: pointer;
+	}
+	#send-btn:disabled {
+		opacity: 0.6;
+	}
+
+	/* ---------- Modo voz ---------- */
+	#voice-btn {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 2.6rem;
+		height: 2.6rem;
+		border: 1.5px solid #cfd7e4;
+		border-radius: 50%;
+		background: #fff;
+		color: var(--royal);
+		cursor: pointer;
+		transition:
+			border-color 0.15s,
+			background 0.15s;
+	}
+	#voice-btn:hover {
+		border-color: var(--royal);
+		background: #eef3fb;
+	}
+	#voice-btn:disabled {
+		opacity: 0.6;
+	}
+	#voice-btn svg,
+	#voice-orb svg {
+		width: 1.15rem;
+		height: 1.15rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+	}
+	#voice-bar {
+		display: flex;
+		align-items: center;
+		gap: 0.8rem;
+		/* Hueco para el halo del micro, que crece con la voz. */
+		padding-left: 0.5rem;
+	}
+	#voice-bar[hidden] {
+		display: none;
+	}
+	#voice-orb {
+		--level: 0;
+		position: relative;
+		isolation: isolate;
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 3.4rem;
+		height: 3.4rem;
+		border: 0;
+		border-radius: 50%;
+		background: var(--navy);
+		color: var(--gold);
+		cursor: pointer;
+	}
+	#voice-orb svg {
+		position: relative;
+		width: 1.35rem;
+		height: 1.35rem;
+	}
+	.orb-ring {
+		position: absolute;
+		z-index: -1;
+		inset: 0;
+		border-radius: 50%;
+		background: rgb(237 187 0 / 35%);
+		transform: scale(calc(1 + var(--level) * 0.55));
+		transition: transform 0.08s linear;
+	}
+	#voice-bar[data-state='hearing'] #voice-orb {
+		background: var(--grana);
+		color: #fff;
+	}
+	#voice-bar[data-state='hearing'] .orb-ring {
+		background: rgb(165 0 68 / 28%);
+	}
+	#voice-bar[data-state='loading'] .orb-ring,
+	#voice-bar[data-state='transcribing'] .orb-ring,
+	#voice-bar[data-state='busy'] .orb-ring {
+		transform: scale(1.15);
+		animation: cn-pulse 0.7s ease-in-out infinite alternate;
+	}
+	#voice-bar[data-state='speaking'] #voice-orb {
+		background: var(--gold);
+		color: var(--navy);
+	}
+	#voice-bar[data-state='speaking'] .orb-ring {
+		animation: cn-speak 1.1s ease-out infinite;
+	}
+	.voice-copy {
+		flex: 1;
+		min-width: 0;
+	}
+	.voice-copy p {
+		margin: 0;
+		line-height: 1.25;
+	}
+	#voice-title {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.05rem;
+		text-transform: uppercase;
+		color: var(--navy);
+	}
+	#voice-sub {
+		font-size: 0.75rem;
+		color: var(--soft);
+	}
+	#voice-progress {
+		height: 4px;
+		margin-top: 0.4rem;
+		border-radius: 999px;
+		background: var(--line);
+		overflow: hidden;
+	}
+	#voice-progress i {
+		display: block;
+		width: 0;
+		height: 100%;
+		background: var(--royal);
+		transition: width 0.2s;
+	}
+	#voice-exit {
+		flex: none;
+		padding: 0.4rem 0.75rem;
+		border: 1px solid #cfd9ea;
+		border-radius: 999px;
+		background: #fff;
+		color: var(--royal);
+		font: inherit;
+		font-size: 0.75rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	#voice-exit:hover {
+		border-color: var(--royal);
+	}
+	:global(.cn-voice) {
+		display: grid;
+		justify-items: end;
+		gap: 0.35rem;
+		max-width: 86%;
+	}
+	:global(.cn-voice .cn-bubble) {
+		max-width: 100%;
+	}
+	:global(.cn-bubble.user.live) {
+		background: #fff;
+		color: var(--royal);
+		box-shadow: inset 0 0 0 1.5px var(--royal);
+	}
+	:global(.cn-bubble.user.live)::after {
+		content: '';
+		display: inline-block;
+		width: 2px;
+		height: 1em;
+		margin-left: 2px;
+		vertical-align: -0.15em;
+		background: currentColor;
+		animation: cn-pulse 0.5s steps(2) infinite;
+	}
+	:global(.cn-meta) {
+		font-size: 0.68rem;
+		color: #94a3b8;
+		font-variant-numeric: tabular-nums;
+	}
+	:global(.cn-hints) {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.3rem;
+	}
+	:global(.cn-hints:empty) {
+		display: none;
+	}
+	:global(.cn-hint) {
+		padding: 0.15rem 0.5rem;
+		border-radius: 999px;
+		background: #fff;
+		box-shadow: inset 0 0 0 1px #cfd9ea;
+		color: var(--navy);
+		font-size: 0.72rem;
+		font-weight: 700;
+		animation: cn-pop 0.2s ease-out;
+	}
+	:global(.cn-hint.total) {
+		background: var(--gold);
+		box-shadow: none;
+	}
+	.zone[data-hint='true'] {
+		stroke: var(--grana);
+		stroke-width: 4;
+		animation: cn-pulse 0.6s ease-in-out infinite alternate;
+	}
+	/* ---------- En vivo (GPT-Live) ---------- */
+	#live-btn {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 2.6rem;
+		height: 2.6rem;
+		border: 0;
+		border-radius: 50%;
+		background: var(--navy);
+		color: var(--gold);
+		cursor: pointer;
+		transition: background 0.15s;
+	}
+	#live-btn:hover {
+		background: var(--royal);
+	}
+	#live-btn:disabled {
+		opacity: 0.6;
+	}
+	#live-btn svg,
+	#live-controls svg {
+		width: 1.15rem;
+		height: 1.15rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	.panel {
+		transition:
+			width 0.3s ease,
+			height 0.3s ease,
+			background 0.3s ease;
+	}
+	.panel.live {
+		width: min(27rem, calc(100vw - 2rem));
+		height: min(44rem, calc(100dvh - 7.5rem));
+		background:
+			radial-gradient(120% 60% at 50% 0%, rgb(0 77 152 / 55%), transparent 70%),
+			radial-gradient(90% 50% at 50% 100%, rgb(165 0 68 / 35%), transparent 70%),
+			#0a1540;
+		color: #fff;
+	}
+	.panel.live .panel-head {
+		background: transparent;
+	}
+	.panel.live #chat-log {
+		background: transparent;
+		mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+	}
+	.panel.live .panel-foot {
+		border-top-color: rgb(255 255 255 / 10%);
+		background: transparent;
+	}
+	#live-stage {
+		--agent: 0;
+		--user: 0;
+		display: grid;
+		justify-items: center;
+		gap: 0.2rem;
+		padding: 0.6rem 1rem 0.4rem;
+	}
+	#live-stage[hidden] {
+		display: none;
+	}
+	.live-orb {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 9.5rem;
+		height: 9.5rem;
+		margin-bottom: 0.4rem;
+	}
+	.live-orb > span {
+		position: absolute;
+		border-radius: 50%;
+	}
+	.live-wave {
+		inset: 1.6rem;
+		border: 2px solid rgb(237 187 0 / 70%);
+		opacity: calc(0.15 + var(--agent) * 0.85);
+		transition:
+			transform 0.06s linear,
+			opacity 0.1s linear;
+	}
+	.live-wave.w1 {
+		transform: scale(calc(1 + var(--agent) * 0.22));
+	}
+	.live-wave.w2 {
+		border-color: rgb(237 187 0 / 40%);
+		transform: scale(calc(1.05 + var(--agent) * 0.42));
+	}
+	.live-wave.w3 {
+		border-color: rgb(237 187 0 / 20%);
+		transform: scale(calc(1.1 + var(--agent) * 0.62));
+	}
+	.live-user {
+		inset: 1.2rem;
+		background: radial-gradient(circle, rgb(165 0 68 / 0%) 55%, rgb(165 0 68 / 55%) 70%, rgb(165 0 68 / 0%) 72%);
+		opacity: var(--user);
+		transform: scale(calc(1 + var(--user) * 0.35));
+		transition: transform 0.06s linear;
+	}
+	.live-core {
+		display: grid;
+		place-items: center;
+		inset: 2rem;
+		background: radial-gradient(circle at 35% 30%, #2f6fd1, var(--royal) 45%, var(--grana) 100%);
+		box-shadow:
+			0 0 calc(18px + var(--agent) * 40px) rgb(237 187 0 / calc(0.25 + var(--agent) * 0.5)),
+			inset 0 -8px 18px rgb(0 0 0 / 30%);
+		transform: scale(calc(1 + var(--agent) * 0.07));
+		transition: transform 0.06s linear;
+	}
+	.live-core img {
+		width: 46%;
+		height: auto;
+		filter: drop-shadow(0 2px 6px rgb(0 0 0 / 35%));
+	}
+	/* El backend (gpt-6-luna) está trabajando: aro que gira alrededor del núcleo. */
+	.live-core::before {
+		content: '';
+		position: absolute;
+		inset: -7px;
+		border-radius: 50%;
+		background: conic-gradient(from 0deg, transparent 0 60%, var(--gold) 85%, transparent 100%);
+		mask: radial-gradient(circle, transparent 64%, #000 66%);
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+	#live-stage[data-backend='true'] .live-core::before {
+		opacity: 1;
+		animation: live-spin 1s linear infinite;
+	}
+	#live-stage[data-state='connecting'] .live-core,
+	#live-stage[data-state='listening'] .live-core {
+		animation: live-breathe 2.4s ease-in-out infinite;
+	}
+	#live-title {
+		margin: 0;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.35rem;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+	}
+	#live-sub {
+		margin: 0;
+		font-size: 0.75rem;
+		color: #aab6d3;
+		text-align: center;
+	}
+	#live-controls {
+		display: flex;
+		justify-content: center;
+		gap: 0.6rem;
+	}
+	#live-controls[hidden] {
+		display: none;
+	}
+	#live-controls button {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		height: 2.8rem;
+		padding: 0 1.2rem;
+		border: 1.5px solid rgb(255 255 255 / 30%);
+		border-radius: 999px;
+		background: rgb(255 255 255 / 6%);
+		color: #fff;
+		font: inherit;
+		font-weight: 700;
+		cursor: pointer;
+	}
+	#live-controls button:hover {
+		background: rgb(255 255 255 / 12%);
+	}
+	#live-mute[aria-pressed='true'] {
+		border-color: var(--gold);
+		color: var(--gold);
+	}
+	#live-end {
+		border-color: transparent !important;
+		background: #dc2626 !important;
+	}
+	#live-end:hover {
+		background: #b91c1c !important;
+	}
+	:global(.panel.live .cn-bubble) {
+		font-size: 1rem;
+	}
+	:global(.panel.live .cn-bubble.agent) {
+		padding: 0.2rem 0.1rem;
+		background: transparent;
+		box-shadow: none;
+		color: #fff;
+		font-size: 1.08rem;
+		line-height: 1.4;
+	}
+	:global(.panel.live .cn-bubble.user),
+	:global(.panel.live .cn-bubble.user.live) {
+		background: rgb(255 255 255 / 12%);
+		box-shadow: none;
+		color: #fff;
+	}
+	:global(.panel.live .cn-bubble.agent.speaking)::after {
+		content: '';
+		display: inline-block;
+		width: 0.45em;
+		height: 0.45em;
+		margin-left: 0.3em;
+		border-radius: 50%;
+		background: var(--gold);
+		animation: cn-pulse 0.5s ease-in-out infinite alternate;
+	}
+	:global(.panel.live .cn-chip) {
+		border-color: rgb(255 255 255 / 15%);
+		background: rgb(255 255 255 / 6%);
+		color: #fff;
+	}
+	:global(.panel.live .cn-chip-head) {
+		background: rgb(255 255 255 / 8%);
+		color: #c9d3e6;
+	}
+	:global(.panel.live .cn-chip-head strong) {
+		color: var(--gold);
+	}
+	:global(.panel.live .cn-chip pre) {
+		color: #86efac;
+	}
+	:global(.panel.live .cn-chip-result) {
+		color: #c9d3e6;
+	}
+	:global(.panel.live .cn-meta) {
+		color: #8e9ab3;
+	}
+	:global(.panel.live .cn-hint) {
+		background: rgb(255 255 255 / 14%);
+		box-shadow: none;
+		color: #fff;
+	}
+	:global(.panel.live .cn-hint.total) {
+		background: var(--gold);
+		color: var(--navy);
+	}
+	:global(.panel.live .cn-bubble.error) {
+		background: rgb(220 38 38 / 20%);
+		color: #fecaca;
+	}
+	@keyframes live-spin {
+		to {
+			transform: rotate(1turn);
+		}
+	}
+	@keyframes live-breathe {
+		50% {
+			transform: scale(1.04);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.live-core,
+		.live-core::before,
+		.orb-ring {
+			animation: none !important;
+		}
+	}
+	@keyframes cn-speak {
+		from {
+			transform: scale(1);
+			opacity: 0.9;
+		}
+		to {
+			transform: scale(1.6);
+			opacity: 0;
+		}
+	}
+	@keyframes cn-pop {
+		from {
+			transform: scale(0.85);
+			opacity: 0;
+		}
+	}
+
+	/* ---------- Entrada confirmada ---------- */
+	dialog {
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font-family: var(--sans);
+	}
+	dialog::backdrop {
+		background: rgb(10 20 60 / 60%);
+		backdrop-filter: blur(3px);
+	}
+	.ticket {
+		width: min(24rem, calc(100vw - 2rem));
+		border-radius: 18px;
+		background: #fff;
+		overflow: hidden;
+		box-shadow: 0 30px 80px rgb(0 0 0 / 40%);
+	}
+	.ticket-head {
+		display: flex;
+		align-items: center;
+		gap: 0.8rem;
+		padding: 1.1rem 1.25rem;
+		background: var(--navy);
+		color: #fff;
+	}
+	.ticket-emblem {
+		width: auto;
+		height: 2.8rem;
+	}
+	.ticket-head p {
+		margin: 0;
+	}
+	.ticket-kicker {
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.4rem;
+		text-transform: uppercase;
+		line-height: 1;
+		color: var(--gold);
+	}
+	.ticket-code {
+		margin-top: 0.2rem !important;
+		font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+		font-size: 0.85rem;
+		letter-spacing: 0.08em;
+	}
+	.ticket-body {
+		padding: 1.1rem 1.25rem 0.5rem;
+		border-bottom: 2px dashed var(--line);
+	}
+	.ticket-body p {
+		margin: 0;
+	}
+	.ticket-crests {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.75rem;
+	}
+	.ticket-crests img {
+		width: 2.6rem;
+		height: 2.6rem;
+		object-fit: contain;
+	}
+	.ticket-crests span {
+		font-family: var(--display);
+		font-weight: 700;
+		text-transform: uppercase;
+		color: var(--soft);
+	}
+	.ticket-comp {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--soft);
+	}
+	.ticket-match {
+		margin-top: 0.2rem !important;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.6rem;
+		line-height: 1;
+		text-transform: uppercase;
+		color: var(--navy);
+	}
+	.ticket-date {
+		margin-top: 0.3rem !important;
+		color: var(--soft);
+	}
+	.ticket-date::first-letter {
+		text-transform: uppercase;
+	}
+	.ticket-seats {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.6rem;
+		margin: 1rem 0 0.75rem;
+	}
+	.ticket-seats dt {
+		font-size: 0.65rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--soft);
+	}
+	.ticket-seats dd {
+		margin: 0;
+		font-family: var(--display);
+		font-weight: 800;
+		font-size: 1.15rem;
+		color: var(--navy);
+	}
+	.ticket-foot {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		padding: 1rem 1.25rem;
+	}
+	.qr {
+		flex: none;
+		width: 6rem;
+		height: 6rem;
+	}
+	.qr :global(svg) {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+	.ticket-foot p {
+		margin: 0;
+		font-size: 0.8rem;
+		color: var(--soft);
+	}
+	.ticket .btn {
+		width: calc(100% - 2.5rem);
+		margin: 0 1.25rem 1.25rem;
+	}
+
+	@keyframes cn-pulse {
+		from {
+			opacity: 1;
+		}
+		to {
+			opacity: 0.3;
+		}
+	}
+
+	@media (max-width: 960px) {
+		.nav-links {
+			display: none;
+		}
+		.nav-cta {
+			margin-left: auto;
+		}
+		.hero-grid,
+		.tickets-grid,
+		.feature-grid {
+			grid-template-columns: 1fr;
+		}
+		.map-card {
+			position: static;
+		}
+		.access-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 640px) {
+		.utility nav a {
+			display: none;
+		}
+		.brand-name {
+			font-size: 1.15rem;
+		}
+		.nav-cta {
+			display: none;
+		}
+		.fixture {
+			grid-template-columns: 5rem minmax(0, 1fr);
+		}
+		.fixture-buy {
+			grid-column: 1 / -1;
+			grid-template-columns: 1fr auto;
+			align-items: center;
+			justify-items: start;
+		}
+		.fixture-buy .btn {
+			grid-row: 1 / span 2;
+			grid-column: 2;
+		}
+		.grid,
+		.access-grid,
+		.foot-grid {
+			grid-template-columns: 1fr;
+		}
+		.summary {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+		.summary-total {
+			justify-items: start;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:global(html[data-theme='light']) {
+			scroll-behavior: auto;
+		}
+	}
+</style>
+
+<script>
+	import { marked } from 'marked';
+	import { renderSVG } from 'uqr';
+	import { COMPETITIONS, type Fixture, formatEuros, MAX_TICKETS, ZONES } from '../../lib/directo/campnou/data.ts';
+	import { readHints } from '../../lib/directo/campnou/hints.ts';
+	import { createVoiceMode, type VoiceState } from '../../lib/directo/campnou/voice.ts';
+	import { createLiveSession, type LiveSession } from '../../lib/directo/campnou/live.ts';
+	import { conToken } from '../../lib/directo/token.ts';
+
+	marked.setOptions({ gfm: true, breaks: true });
+
+	type FieldParam = {
+		name: string;
+		description: string;
+		type: string;
+		required: boolean;
+		options?: string[];
+	};
+
+	const fixtures: Fixture[] = JSON.parse(document.getElementById('fixtures-data')!.textContent!);
+	const fixtureById = new Map(fixtures.map((f) => [f.id, f]));
+	const zoneById = new Map(ZONES.map((z) => [z.id, z]));
+
+	const form = document.getElementById('reservationForm') as HTMLFormElement;
+	const formCard = document.getElementById('form-card') as HTMLDivElement;
+	const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+	const dialog = document.getElementById('booking-dialog') as HTMLDialogElement;
+	const modalDetails = document.getElementById('modal-details') as HTMLParagraphElement;
+	const closeDialogBtn = document.getElementById('close-dialog-btn') as HTMLButtonElement;
+
+	const partido = document.getElementById('partido') as HTMLSelectElement;
+	const zona = document.getElementById('zona') as HTMLSelectElement;
+	const entradas = document.getElementById('num-entradas') as HTMLSelectElement;
+	const nombre = document.getElementById('nombre') as HTMLInputElement;
+	const email = document.getElementById('email') as HTMLInputElement;
+	const telefono = document.getElementById('telefono') as HTMLInputElement;
+	const socio = document.getElementById('socio') as HTMLInputElement;
+	const socioHint = document.getElementById('socio-hint') as HTMLSpanElement;
+
+	const $ = (id: string) => document.getElementById(id) as HTMLElement;
+	const plural = (n: number) => `${n} ${n === 1 ? 'entrada' : 'entradas'}`;
+
+	// ----- Plano, leyenda y resumen: siempre reflejan el formulario -----
+	const mapZones = document.querySelectorAll<SVGElement>('.zone[data-zone]');
+	const legendButtons = document.querySelectorAll<HTMLButtonElement>('#legend button[data-zone]');
+
+	function pickZone(id: string) {
+		zona.value = id;
+		zona.dispatchEvent(new Event('change', { bubbles: true }));
+	}
+
+	for (const el of mapZones) {
+		el.addEventListener('click', () => pickZone(el.dataset.zone!));
+		el.addEventListener('keydown', (e) => {
+			if (e.key !== 'Enter' && e.key !== ' ') return;
+			e.preventDefault();
+			pickZone(el.dataset.zone!);
+		});
+	}
+	for (const button of legendButtons) button.addEventListener('click', () => pickZone(button.dataset.zone!));
+
+	function updateSummary() {
+		const fixture = fixtureById.get(partido.value);
+		const zone = zoneById.get(zona.value);
+		const count = Number(entradas.value) || 0;
+
+		for (const el of mapZones) el.dataset.selected = String(el.dataset.zone === zona.value);
+		for (const button of legendButtons) button.setAttribute('aria-pressed', String(button.dataset.zone === zona.value));
+		if (fixture) {
+			for (const el of document.querySelectorAll<HTMLElement>('[data-price]')) {
+				el.textContent = formatEuros(fixture.prices[el.dataset.price!]!);
+			}
+		}
+
+		socioHint.textContent = zone?.membersOnly ? 'obligatorio en Gol Sud' : 'opcional';
+		socioHint.classList.toggle('required', !!zone?.membersOnly);
+
+		if (!fixture || !zone) return;
+		const price = fixture.prices[zone.id]!;
+		$('summary-match').textContent = `FC Barcelona – ${fixture.rival}`;
+		$('summary-line').textContent = `${fixture.dateLabel} · ${fixture.time} · ${zone.name} · ${plural(count)} × ${formatEuros(price)}`;
+		$('summary-total').textContent = formatEuros(price * count);
+	}
+
+	form.addEventListener('input', updateSummary);
+	form.addEventListener('change', updateSummary);
+	updateSummary();
+
+	// Botones "Comprar" del calendario y del hero
+	for (const button of document.querySelectorAll<HTMLButtonElement>('[data-buy]')) {
+		button.addEventListener('click', () => {
+			partido.value = button.dataset.buy!;
+			partido.dispatchEvent(new Event('change', { bubbles: true }));
+			document.getElementById('entradas')?.scrollIntoView({ behavior: 'smooth' });
+		});
+	}
+
+	// ----- Derivar la herramienta a partir del HTML del formulario -----
+	const toolName = form.getAttribute('toolname') ?? '';
+	const toolDescription = form.getAttribute('tooldescription') ?? '';
+
+	function getParams(): FieldParam[] {
+		const fields = form.querySelectorAll<HTMLElement>('[toolparamdescription]');
+		return Array.from(fields).map((el) => {
+			const field = el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+			const isSelect = field.tagName === 'SELECT';
+			return {
+				name: field.getAttribute('name') ?? '',
+				description: field.getAttribute('toolparamdescription') ?? '',
+				type: isSelect ? 'enum' : ((field as HTMLInputElement).type ?? 'text'),
+				required: field.hasAttribute('required'),
+				options: isSelect ? Array.from((field as HTMLSelectElement).options).map((o) => o.value) : undefined,
+			};
+		});
+	}
+
+	const params = getParams();
+
+	// ----- Soporte: la API declarativa aún no es nativa -----
+	const nav = navigator as any;
+	const hasNative = typeof nav.modelContext?.registerTool === 'function';
+	const supportBadge = document.getElementById('support-badge') as HTMLParagraphElement;
+	if (hasNative) {
+		supportBadge.textContent = 'navigator.modelContext nativo';
+	} else {
+		supportBadge.hidden = true;
+	}
+
+	// ----- Esquema JSON de la herramienta (para el tool-calling del modelo) -----
+	function buildToolParameters() {
+		const properties: Record<string, any> = {};
+		const required: string[] = [];
+		for (const p of params) {
+			const prop: Record<string, any> = { type: 'string', description: p.description };
+			if (p.options) prop.enum = p.options;
+			properties[p.name] = prop;
+			if (p.required) required.push(p.name);
+		}
+		return { type: 'object', properties, required };
+	}
+
+	const openAiTools = [
+		{
+			type: 'function',
+			function: {
+				name: toolName,
+				description: toolDescription,
+				parameters: buildToolParameters(),
+			},
+		},
+	];
+
+	// ----- Validación (devuelve errores estilo MCP) -----
+	type ValidationError = { field: string; value: string; message: string };
+
+	function resetValidationUI() {
+		form.querySelectorAll('.field-input').forEach((el) => el.classList.remove('invalid'));
+		form.querySelectorAll('.error-msg').forEach((el) => el.classList.add('hidden'));
+	}
+
+	function validateForm(): ValidationError[] {
+		const errors: ValidationError[] = [];
+
+		const check = (field: HTMLInputElement | HTMLSelectElement, condition: boolean, message?: string) => {
+			const errorSpan = field.closest('.field')?.querySelector('.error-msg') as HTMLElement | null;
+			if (!condition) {
+				if (errorSpan && message) errorSpan.textContent = message;
+				field.classList.add('invalid');
+				errorSpan?.classList.remove('hidden');
+				errors.push({
+					field: field.name,
+					value: field.value,
+					message: errorSpan?.textContent?.trim() ?? 'Campo no válido',
+				});
+			} else {
+				field.classList.remove('invalid');
+				errorSpan?.classList.add('hidden');
+			}
+		};
+
+		const fixture = fixtureById.get(partido.value);
+		check(partido, !!fixture);
+
+		const zone = zoneById.get(zona.value);
+		check(zona, !!zone);
+
+		const count = Number(entradas.value);
+		const limit = Math.min(MAX_TICKETS, fixture?.maxTickets ?? MAX_TICKETS);
+		check(
+			entradas,
+			Number.isInteger(count) && count >= 1 && count <= limit,
+			limit < MAX_TICKETS && fixture?.tag
+				? `Para ${fixture.tag}, máximo ${limit} entradas por persona.`
+				: `Puedes reservar de 1 a ${MAX_TICKETS} entradas.`,
+		);
+
+		check(nombre, nombre.value.trim().split(/\s+/).filter((w) => w.length >= 2).length >= 2);
+
+		check(email, /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim()));
+
+		const phone = telefono.value.replace(/\D/g, '').replace(/^(0034|34)(?=\d{9}$)/, '');
+		check(telefono, /^[6789]\d{8}$/.test(phone));
+
+		const memberNumber = socio.value.trim();
+		if (zone?.membersOnly && !memberNumber) {
+			check(socio, false, "El Gol Sud (Grada d'Animació) es solo para socios: indica tu número de socio.");
+		} else {
+			check(socio, memberNumber === '' || /^\d{5,8}$/.test(memberNumber), 'El número de socio tiene entre 5 y 8 dígitos.');
+		}
+
+		return errors;
+	}
+
+	// Asientos y localizador de mentira, pero con pinta de verdad.
+	function randomCode() {
+		const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+		return Array.from(crypto.getRandomValues(new Uint8Array(6)), (n) => alphabet[n % alphabet.length]).join('');
+	}
+
+	const GATES: Record<string, number[]> = {
+		tribuna: [14, 15, 16],
+		lateral: [3, 4, 5],
+		'gol-nord': [9, 10, 11],
+		'gol-sud': [18, 19, 20],
+		'palco-vip': [15],
+	};
+
+	function buildConfirmation(): string {
+		const fixture = fixtureById.get(partido.value)!;
+		const zone = zoneById.get(zona.value)!;
+		const count = Number(entradas.value);
+		const total = fixture.prices[zone.id]! * count;
+		const rand = (min: number, max: number) => min + Math.floor(Math.random() * (max - min + 1));
+		const gates = GATES[zone.id] ?? [1];
+
+		const code = `CN-${randomCode()}`;
+		const gate = gates[rand(0, gates.length - 1)]!;
+		const sector = zone.id === 'palco-vip' ? 'VIP' : String(rand(101, 146));
+		const row = String(rand(3, 28));
+		const first = rand(1, 30);
+		const seats = count === 1 ? String(first) : `${first}–${first + count - 1}`;
+
+		$('ticket-code').textContent = `Localizador ${code}`;
+		($('ticket-rival-crest') as HTMLImageElement).src = fixture.crest;
+		$('ticket-comp').textContent = COMPETITIONS[fixture.competition] + (fixture.tag ? ` · ${fixture.tag}` : '');
+		$('ticket-match').textContent = `FC Barcelona – ${fixture.rival}`;
+		$('ticket-date').textContent = `${fixture.dateLong} · ${fixture.time} h`;
+		$('ticket-zone').textContent = zone.name;
+		$('ticket-gate').textContent = String(gate);
+		$('ticket-sector').textContent = sector;
+		$('ticket-row').textContent = row;
+		$('ticket-seat').textContent = seats;
+		$('ticket-total').textContent = formatEuros(total);
+		$('ticket-qr').innerHTML = renderSVG(`${code}|${fixture.id}|${zone.id}|${count}`, {
+			border: 0,
+			blackColor: '#0c1b4d',
+			whiteColor: '#ffffff',
+		});
+		modalDetails.textContent = `${plural(count)} a nombre de ${nombre.value.trim()}. Te las hemos enviado a ${email.value.trim()}.`;
+
+		return (
+			`Reserva confirmada. Localizador ${code}. ${plural(count)} para FC Barcelona – ${fixture.rival} ` +
+			`(${COMPETITIONS[fixture.competition]}), ${fixture.dateLong} a las ${fixture.time}. ` +
+			`${zone.name}, puerta ${gate}, sector ${sector}, fila ${row}, asientos ${seats}. ` +
+			`Total ${formatEuros(total)}. Entradas enviadas a ${email.value.trim()}.`
+		);
+	}
+
+	// ----- Manejador de envío del formulario -----
+	// En la API declarativa nativa, el evento submit lleva e.agentInvoked y
+	// e.respondWith(). Aquí lo simulamos con un flag de contexto del agente.
+	let agentCall: { respondWith: (value: unknown) => void } | null = null;
+
+	form.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const errors = validateForm();
+		const native = e as SubmitEvent & { agentInvoked?: boolean; respondWith?: (value: Promise<unknown>) => void };
+		const respond =
+			agentCall?.respondWith ??
+			(native.agentInvoked && typeof native.respondWith === 'function'
+				? (value: unknown) => native.respondWith!(Promise.resolve(value))
+				: null);
+
+		if (errors.length) {
+			respond?.(errors);
+			return;
+		}
+
+		const confirmation = buildConfirmation();
+		dialog.showModal();
+		respond?.(confirmation);
+	});
+
+	closeDialogBtn.addEventListener('click', () => dialog.close());
+	dialog.addEventListener('click', (e) => {
+		if (e.target === dialog) dialog.close();
+	});
+
+	function applyFieldValue(name: string, value: string) {
+		const field = form.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(`[name="${name}"]`);
+		if (!field) return;
+		field.value = value;
+		field.classList.add('tool-filling');
+		field.dispatchEvent(new Event('input', { bubbles: true }));
+		field.dispatchEvent(new Event('change', { bubbles: true }));
+		setTimeout(() => field.classList.remove('tool-filling'), 700);
+	}
+
+	const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+	// ----- El agente ejecuta la herramienta declarativa -----
+	// Rellena el formulario real campo a campo y lo envía, capturando respondWith.
+	async function runReservationTool(args: Record<string, any>): Promise<{ text: string; isError: boolean }> {
+		resetValidationUI();
+		formCard.classList.add('tool-active');
+		formCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		await wait(350);
+
+		// Los campos que no manda el agente se vacían: la herramienta es la fuente de verdad.
+		for (const p of params) {
+			if (!(p.name in args) && !p.required && !p.options) applyFieldValue(p.name, '');
+		}
+		for (const [name, value] of Object.entries(args)) {
+			applyFieldValue(name, String(value ?? ''));
+			await wait(260);
+		}
+
+		submitBtn.classList.add('tool-submit-active');
+		await wait(350);
+
+		const result = await new Promise<unknown>((resolve) => {
+			agentCall = { respondWith: resolve };
+			form.requestSubmit();
+		});
+		agentCall = null;
+
+		submitBtn.classList.remove('tool-submit-active');
+		formCard.classList.remove('tool-active');
+
+		const isError = Array.isArray(result);
+		return {
+			text: isError ? JSON.stringify(result) : String(result),
+			isError,
+		};
+	}
+
+	// ----- Asistente flotante -----
+	const chatFab = document.getElementById('chat-fab') as HTMLButtonElement;
+	const chatPanel = document.getElementById('chat-panel') as HTMLDivElement;
+	const fabIconOpen = document.getElementById('fab-icon-open') as unknown as SVGElement;
+	const fabIconClose = document.getElementById('fab-icon-close') as unknown as SVGElement;
+	const chatLog = document.getElementById('chat-log') as HTMLDivElement;
+	const chatForm = document.getElementById('chat-form') as HTMLFormElement;
+	const chatInput = document.getElementById('chat-input') as HTMLTextAreaElement;
+	const sendBtn = document.getElementById('send-btn') as HTMLButtonElement;
+	const resetBtn = document.getElementById('reset-chat') as HTMLButtonElement;
+	const agentStatus = document.getElementById('agent-status') as HTMLParagraphElement;
+	const suggestionsEl = document.getElementById('suggestions') as HTMLDivElement;
+
+	const now = new Date();
+	const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+	const todayLabel = now.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+	const fixturesForPrompt = fixtures
+		.map(
+			(f) =>
+				`- ${f.id}: FC Barcelona vs ${f.rival} (${COMPETITIONS[f.competition]}${f.tag ? `, ${f.tag}` : ''}), ${f.dateLong} (${f.date}) a las ${f.time}. ` +
+				`Precio por entrada: ${ZONES.map((z) => `${z.id} ${f.prices[z.id]} €`).join(', ')}.` +
+				(f.maxTickets ? ` Máximo ${f.maxTickets} entradas por persona.` : '') +
+				(f.status === 'ultimas' ? ' Quedan pocas entradas.' : ''),
+		)
+		.join('\n');
+
+	const zonesForPrompt = ZONES.map((z) => `- ${z.id}: ${z.name} (${z.detail})`).join('\n');
+
+	const SYSTEM_PROMPT =
+		`Eres el asistente virtual de venta de entradas del Spotify Camp Nou, el estadio del FC Barcelona (C. d'Arístides Maillol 12, Barcelona). ` +
+		`Hoy es ${todayLabel} (${today}).\n\nPartidos a la venta:\n${fixturesForPrompt}\n\nZonas:\n${zonesForPrompt}\n\n` +
+		`Normas: de 1 a ${MAX_TICKETS} entradas por compra. El Gol Sud (Grada d'Animació) es solo para socios y necesita su número de socio. ` +
+		`Las entradas son nominativas: hacen falta nombre y apellidos, email y móvil español.\n\n` +
+		`Para reservar, reúne partido, zona, número de entradas, nombre y apellidos, email y móvil, y usa la herramienta "${toolName}" para rellenar y enviar el formulario de la página. ` +
+		`Si no eligen zona, recomienda una según su presupuesto y di el total. Entiende "el Clásico", "el derbi", "la Champions" o "este sábado" con el calendario de arriba. ` +
+		`Si falta un dato, pregúntalo antes de llamar a la herramienta. Si la herramienta devuelve errores, explícalos y corrígelos con el usuario. ` +
+		`Cuando la reserva salga bien, da el localizador y el resumen en pocas líneas. ` +
+		`Habla en español de España, de tú, breve y amable. Precios en euros.`;
+
+	// En modo voz la respuesta se lee en alto y el mensaje llega transcrito por Whisper en local.
+	const VOICE_PROMPT =
+		`\n\nMODO VOZ: el usuario te habla y tu respuesta se leerá en voz alta. Contesta en una o dos frases cortas, ` +
+		`sin markdown, listas, tablas ni emojis. ` +
+		`Su mensaje llega transcrito por Whisper y puede traer errores: "arroba" es @, "punto" es ".", junta los dígitos del móvil ` +
+		`y deduce el partido o la zona aunque estén mal escritos. Si un email o un nombre no está claro, pídele que lo deletree. ` +
+		`No leas el resumen completo de la reserva: el formulario y la entrada ya se ven en pantalla; di solo el localizador y el total.`;
+
+	type ChatMessage = {
+		role: 'system' | 'user' | 'assistant' | 'tool';
+		content: string | null;
+		tool_calls?: any[];
+		tool_call_id?: string;
+		name?: string;
+	};
+	let history: ChatMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }];
+
+	function scrollChat() {
+		chatLog.scrollTop = chatLog.scrollHeight;
+	}
+
+	function escapeHtml(s: string) {
+		return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
+
+	function addUserMessage(text: string) {
+		const el = document.createElement('div');
+		el.className = 'cn-row end';
+		el.innerHTML = `<div class="cn-bubble user"></div>`;
+		el.querySelector('div')!.textContent = text;
+		chatLog.appendChild(el);
+		scrollChat();
+	}
+
+	function addAssistantMessage(): HTMLDivElement {
+		const el = document.createElement('div');
+		el.className = 'cn-row';
+		el.innerHTML = `<div class="cn-bubble agent"></div>`;
+		chatLog.appendChild(el);
+		scrollChat();
+		return el.querySelector('div') as HTMLDivElement;
+	}
+
+	/** Burbuja de espera visible mientras el modelo razona. */
+	let thinkingEl: HTMLElement | null = null;
+	let thinkingTimer: ReturnType<typeof setInterval> | null = null;
+	let thinkingStartedAt = 0;
+
+	function showThinking(label = 'Pensando') {
+		removeThinking();
+		thinkingStartedAt = Date.now();
+		const el = document.createElement('div');
+		el.className = 'cn-row';
+		el.setAttribute('aria-live', 'polite');
+		el.setAttribute('aria-busy', 'true');
+		el.innerHTML = `
+			<div class="cn-thinking">
+				<span class="cn-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+				<span class="thinking-label">${escapeHtml(label)}…</span>
+				<span class="cn-elapsed">0s</span>
+			</div>`;
+		chatLog.appendChild(el);
+		thinkingEl = el;
+		scrollChat();
+
+		thinkingTimer = setInterval(() => {
+			if (!thinkingEl) return;
+			const secs = Math.floor((Date.now() - thinkingStartedAt) / 1000);
+			const elapsed = thinkingEl.querySelector('.cn-elapsed') as HTMLElement | null;
+			if (elapsed) elapsed.textContent = `${secs}s`;
+		}, 250);
+	}
+
+	function updateThinking(label: string) {
+		if (!thinkingEl) {
+			showThinking(label);
+			return;
+		}
+		const labelEl = thinkingEl.querySelector('.thinking-label') as HTMLElement | null;
+		if (labelEl) labelEl.textContent = `${label}…`;
+		scrollChat();
+	}
+
+	function removeThinking() {
+		if (thinkingTimer) {
+			clearInterval(thinkingTimer);
+			thinkingTimer = null;
+		}
+		thinkingEl?.remove();
+		thinkingEl = null;
+	}
+
+	// Chip que muestra qué herramienta usa el agente en cada momento
+	function addToolChip(name: string, args: Record<string, any>) {
+		removeThinking();
+		const el = document.createElement('div');
+		el.className = 'cn-row';
+		const argsStr = Object.keys(args).length ? escapeHtml(JSON.stringify(args, null, 2)) : '{}';
+		el.innerHTML = `
+			<div class="cn-chip">
+				<div class="cn-chip-head"><span class="cn-chip-dot"></span>tools/call → <strong>${escapeHtml(name)}</strong></div>
+				<pre>${argsStr}</pre>
+				<div class="cn-chip-result">rellenando el formulario…</div>
+			</div>`;
+		chatLog.appendChild(el);
+		scrollChat();
+		return el;
+	}
+
+	function resolveChip(chip: HTMLElement, text: string, isError: boolean) {
+		chip.querySelector('.cn-chip-dot')?.classList.add(isError ? 'fail' : 'done');
+		const resultEl = chip.querySelector('.cn-chip-result') as HTMLElement;
+		resultEl.classList.toggle('fail', isError);
+		resultEl.textContent = `→ ${text}`;
+		scrollChat();
+	}
+
+	function setStatus(text: string, isBusy = false) {
+		agentStatus.dataset.busy = String(isBusy);
+		agentStatus.textContent = text;
+	}
+
+	async function callModel(): Promise<ChatMessage> {
+		const res = await fetch('/api/directo/webmcp-chat', {
+			method: 'POST',
+			headers: conToken({ 'Content-Type': 'application/json' }),
+			body: JSON.stringify({
+				messages: history,
+				tools: openAiTools,
+				model: 'gpt-6-luna',
+				reasoning_effort: 'xhigh',
+			}),
+		});
+		if (!res.ok) {
+			let message = `HTTP ${res.status}`;
+			try {
+				const data = await res.json();
+				if (data?.error) message = data.error;
+			} catch {}
+			throw new Error(message);
+		}
+		const data = await res.json();
+		return data.message as ChatMessage;
+	}
+
+	let busy = false;
+
+	/** Manda un mensaje al agente y devuelve el texto de su respuesta (para leerlo en modo voz). */
+	async function sendMessage(text: string, { fromVoice = false } = {}): Promise<string> {
+		if (busy || !text.trim()) return '';
+		busy = true;
+		let reply = '';
+		sendBtn.disabled = true;
+		voiceBtn.disabled = true;
+		liveBtn.disabled = true;
+		sendBtn.textContent = '…';
+		chatInput.disabled = true;
+		suggestionsEl.innerHTML = '';
+
+		if (!fromVoice) addUserMessage(text);
+		history[0] = { role: 'system', content: SYSTEM_PROMPT + (voiceOn ? VOICE_PROMPT : '') };
+		history.push({ role: 'user', content: text });
+
+		try {
+			setStatus('Pensando…', true);
+			showThinking('Pensando');
+
+			for (let step = 0; step < 6; step++) {
+				if (step > 0) {
+					setStatus('Pensando…', true);
+					showThinking('Pensando');
+				}
+
+				const assistant = await callModel();
+				history.push(assistant);
+
+				const toolCalls = assistant.tool_calls ?? [];
+				if (toolCalls.length === 0) {
+					removeThinking();
+					const bubble = addAssistantMessage();
+					bubble.innerHTML = marked.parse(assistant.content ?? '') as string;
+					reply = bubble.innerText;
+					scrollChat();
+					break;
+				}
+
+				for (const call of toolCalls) {
+					const name = call.function?.name as string;
+					let args: Record<string, any> = {};
+					try {
+						args = JSON.parse(call.function?.arguments || '{}');
+					} catch {}
+
+					setStatus(`Usando ${name}…`, true);
+					updateThinking(`Usando ${name}`);
+					const chip = addToolChip(name, args);
+
+					const result =
+						name === toolName ? await runReservationTool(args) : { text: `Herramienta desconocida: ${name}`, isError: true };
+
+					resolveChip(chip, result.text, result.isError);
+
+					history.push({
+						role: 'tool',
+						tool_call_id: call.id,
+						name,
+						content: result.text,
+					});
+				}
+				updateThinking('Pensando');
+				setStatus('Pensando…', true);
+			}
+		} catch (err: any) {
+			removeThinking();
+			const bubble = addAssistantMessage();
+			bubble.classList.add('error');
+			bubble.innerHTML = `No se pudo completar la petición.<small>${escapeHtml(err?.message ?? String(err))}</small>`;
+			reply = 'No he podido completar la petición.';
+		} finally {
+			removeThinking();
+			busy = false;
+			sendBtn.disabled = false;
+			voiceBtn.disabled = false;
+			liveBtn.disabled = false;
+			sendBtn.textContent = 'Enviar';
+			chatInput.disabled = false;
+			setStatus('En línea');
+			if (!voiceOn) chatInput.focus();
+		}
+		return reply;
+	}
+
+	const SUGGESTIONS = [
+		'Quiero ir al Clásico con mi pareja, ¿qué zonas hay?',
+		'¿Qué partidos de Champions hay y cuánto cuestan?',
+		'4 entradas para el derbi en Gol Nord a nombre de Laia Puig, laia@correo.es, 612345678',
+	];
+
+	function renderSuggestions() {
+		suggestionsEl.innerHTML = SUGGESTIONS.map(
+			(s) => `<button type="button" data-suggestion="${s.replace(/"/g, '&quot;')}" class="cn-suggest">${escapeHtml(s)}</button>`,
+		).join('');
+		suggestionsEl.querySelectorAll<HTMLButtonElement>('[data-suggestion]').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				if (busy) return;
+				sendMessage(btn.dataset.suggestion!);
+			});
+		});
+	}
+
+	function greet() {
+		const bubble = addAssistantMessage();
+		bubble.innerHTML = marked.parse(
+			'¡Hola! Soy el asistente del **Spotify Camp Nou**. Dime qué partido quieres ver, cuántos sois y dónde os queréis sentar, y te dejo las entradas reservadas.',
+		) as string;
+		if (!voiceOn) renderSuggestions();
+	}
+
+	function resetChat() {
+		removeThinking();
+		history = [{ role: 'system', content: SYSTEM_PROMPT }];
+		chatLog.innerHTML = '';
+		greet();
+		setStatus('En línea');
+	}
+
+	let chatOpen = false;
+	function toggleChat(open?: boolean) {
+		chatOpen = open ?? !chatOpen;
+		chatPanel.classList.toggle('hidden', !chatOpen);
+		fabIconOpen.classList.toggle('hidden', chatOpen);
+		fabIconClose.classList.toggle('hidden', !chatOpen);
+		chatFab.setAttribute('aria-label', chatOpen ? 'Cerrar el asistente virtual' : 'Abrir el asistente virtual');
+		if (chatOpen) {
+			if (chatLog.childElementCount === 0) greet();
+			setTimeout(() => chatInput.focus(), 50);
+		}
+	}
+
+	chatFab.addEventListener('click', () => toggleChat());
+
+	chatForm.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const text = chatInput.value.trim();
+		if (!text) return;
+		chatInput.value = '';
+		chatInput.style.height = 'auto';
+		sendMessage(text);
+	});
+
+	chatInput.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			chatForm.requestSubmit();
+		}
+	});
+	chatInput.addEventListener('input', () => {
+		chatInput.style.height = 'auto';
+		chatInput.style.height = Math.min(chatInput.scrollHeight, 112) + 'px';
+	});
+
+	resetBtn.addEventListener('click', resetChat);
+
+	// ----- Modo voz: Whisper en local (WebGPU) + el mismo agente WebMCP -----
+	const voiceBtn = document.getElementById('voice-btn') as HTMLButtonElement;
+	const voiceBar = document.getElementById('voice-bar') as HTMLDivElement;
+	const voiceOrb = document.getElementById('voice-orb') as HTMLButtonElement;
+	const voiceExit = document.getElementById('voice-exit') as HTMLButtonElement;
+	const voiceTitle = document.getElementById('voice-title') as HTMLParagraphElement;
+	const voiceSub = document.getElementById('voice-sub') as HTMLParagraphElement;
+	const voiceProgress = document.getElementById('voice-progress') as HTMLDivElement;
+	const voiceProgressBar = voiceProgress.querySelector('i') as HTMLElement;
+
+	let voiceOn = false;
+	/** Burbuja que se va escribiendo mientras hablas, con las pistas debajo. */
+	let live: { row: HTMLElement; bubble: HTMLElement; hints: HTMLElement; key: string } | null = null;
+
+	const VOICE_COPY: Record<VoiceState, [string, string]> = {
+		off: ['', ''],
+		loading: ['Cargando Whisper…', 'Whisper base · WebGPU · en tu navegador'],
+		listening: ['Te escucho', 'Habla cuando quieras · Whisper en local'],
+		hearing: ['Escuchando…', 'Toca el micro para enviar ya'],
+		transcribing: ['Transcribiendo…', 'Pasada final de Whisper'],
+		busy: ['Pensando…', 'GPT-6 Luna + herramienta WebMCP'],
+		speaking: ['Hablando…', 'Toca para interrumpir'],
+	};
+
+	function renderVoiceState(state: VoiceState) {
+		voiceBar.dataset.state = state;
+		const [title, sub] = VOICE_COPY[state];
+		voiceTitle.textContent = title;
+		voiceSub.textContent = sub;
+		voiceProgress.hidden = state !== 'loading';
+		voiceOrb.setAttribute('aria-label', state === 'hearing' ? 'Enviar ya' : state === 'speaking' ? 'Interrumpir' : 'Modo voz');
+	}
+
+	function clearZoneHints() {
+		for (const el of mapZones) delete el.dataset.hint;
+	}
+
+	function renderHints(text: string) {
+		if (!live) return;
+		const { fixture, zone, count, total } = readHints(text, fixtures);
+		const chips = [fixture && `${fixture.rival}${fixture.tag ? ` · ${fixture.tag}` : ''}`, zone?.name, count && plural(count)].filter(
+			Boolean,
+		) as string[];
+		if (total) chips.push(`≈ ${formatEuros(total)}`);
+		const key = chips.join('|');
+		if (key === live.key) return;
+		live.key = key;
+		live.hints.innerHTML = chips
+			.map((c, i) => `<span class="cn-hint${total && i === chips.length - 1 ? ' total' : ''}">${escapeHtml(c)}</span>`)
+			.join('');
+		for (const el of mapZones) el.dataset.hint = String(el.dataset.zone === zone?.id);
+	}
+
+	function showLive(text = '') {
+		if (!live) {
+			const row = document.createElement('div');
+			row.className = 'cn-row end';
+			row.innerHTML = `<div class="cn-voice"><div class="cn-bubble user live"></div><div class="cn-hints"></div></div>`;
+			chatLog.appendChild(row);
+			live = { row, bubble: row.querySelector('.cn-bubble')!, hints: row.querySelector('.cn-hints')!, key: '' };
+		}
+		live.bubble.textContent = text;
+		renderHints(text);
+		scrollChat();
+	}
+
+	function finalizeLive(text: string, ms: number) {
+		showLive(text);
+		const { row, bubble } = live!;
+		bubble.classList.remove('live');
+		const meta = document.createElement('span');
+		meta.className = 'cn-meta';
+		meta.textContent = `voz · Whisper local · ${ms} ms`;
+		row.querySelector('.cn-voice')!.appendChild(meta);
+		live = null;
+	}
+
+	function dropLive() {
+		live?.row.remove();
+		live = null;
+		clearZoneHints();
+	}
+
+	const voice = createVoiceMode({
+		onState: renderVoiceState,
+		onProgress: (pct, label) => {
+			if (voice.state !== 'loading') return;
+			voiceTitle.textContent = pct == null ? `${label}…` : `${label} · ${pct} %`;
+			voiceProgressBar.style.width = `${pct ?? 100}%`;
+		},
+		onLevel: (level) => voiceOrb.style.setProperty('--level', level.toFixed(3)),
+		onSpeechStart: () => {
+			dropLive();
+			showLive();
+		},
+		onPartial: (text) => showLive(text),
+		onDiscard: dropLive,
+		onFinal: async (text, ms) => {
+			finalizeLive(text, ms);
+			const reply = await sendMessage(text, { fromVoice: true });
+			clearZoneHints();
+			if (voiceOn) await voice.speak(reply);
+		},
+		onError: (message) => {
+			const bubble = addAssistantMessage();
+			bubble.classList.add('error');
+			bubble.innerHTML = `Whisper ha fallado.<small>${escapeHtml(message)}</small>`;
+		},
+	});
+
+	async function enterVoice() {
+		if (voiceOn || liveOn || busy) return;
+		voiceOn = true;
+		chatForm.hidden = true;
+		suggestionsEl.innerHTML = '';
+		voiceBar.hidden = false;
+		voiceProgressBar.style.width = '0';
+		renderVoiceState('loading');
+		try {
+			await voice.start();
+		} catch (err: any) {
+			exitVoice();
+			const bubble = addAssistantMessage();
+			bubble.classList.add('error');
+			bubble.innerHTML = `No se pudo activar el modo voz.<small>${escapeHtml(err?.message ?? String(err))}</small>`;
+		}
+	}
+
+	function exitVoice() {
+		if (!voiceOn) return;
+		voiceOn = false;
+		voice.stop();
+		dropLive();
+		voiceBar.hidden = true;
+		chatForm.hidden = false;
+		chatInput.focus();
+	}
+
+	function voiceAction() {
+		if (voice.state === 'hearing') voice.commit();
+		else if (voice.state === 'speaking') voice.interrupt();
+	}
+
+	voiceBtn.addEventListener('click', enterVoice);
+	voiceExit.addEventListener('click', exitVoice);
+	voiceOrb.addEventListener('click', voiceAction);
+	// Espacio = tocar el micro (enviar ya o interrumpir), útil en el escenario.
+	document.addEventListener('keydown', (e) => {
+		if (!voiceOn || e.code !== 'Space' || e.repeat) return;
+		const target = e.target as HTMLElement;
+		if (target.closest('input, textarea, select, button')) return;
+		e.preventDefault();
+		voiceAction();
+	});
+	chatFab.addEventListener('click', () => {
+		if (!chatOpen) exitVoice();
+	});
+	resetBtn.addEventListener('click', () => {
+		if (!voiceOn) return;
+		dropLive();
+		if (voice.state === 'speaking') voice.interrupt();
+	});
+
+	// ----- En vivo: GPT-Live habla y gpt-6-luna usa la herramienta WebMCP mientras tanto -----
+	const liveBtn = document.getElementById('live-btn') as HTMLButtonElement;
+	const liveStage = document.getElementById('live-stage') as HTMLDivElement;
+	const liveTitle = document.getElementById('live-title') as HTMLParagraphElement;
+	const liveSub = document.getElementById('live-sub') as HTMLParagraphElement;
+	const liveControls = document.getElementById('live-controls') as HTMLDivElement;
+	const liveMute = document.getElementById('live-mute') as HTMLButtonElement;
+	const liveEnd = document.getElementById('live-end') as HTMLButtonElement;
+	const panelBadge = document.getElementById('panel-badge') as HTMLSpanElement;
+
+	// Prompt de la voz: estilo de conversación y cuándo delegar (según la guía de GPT-Live).
+	const LIVE_INSTRUCTIONS = `Eres el asistente de voz de venta de entradas del Spotify Camp Nou, el estadio del FC Barcelona. Hablas en español de España, de tú, con calidez y un ritmo ágil, como alguien de la taquilla del club. Una o dos frases cortas por turno.
+
+Política de backchannel: usa pocos backchannels ("ajá", "vale") y no pises al usuario.
+
+Política de interrupciones: si el usuario te interrumpe, deja de hablar y escúchale.
+
+Política de delegación:
+Herramientas del backend:
+- Taquilla: conoce los partidos a la venta, las zonas, los precios y las normas, y rellena y envía el formulario de reserva de la página.
+
+Genera <|SpawnThinking|> cuando:
+- El usuario pregunta por partidos, fechas, precios, zonas o normas.
+- El usuario quiere reservar, o da o corrige un dato de la reserva (partido, zona, número de entradas, nombre, email, móvil o número de socio).
+
+No generes <|SpawnThinking|> cuando:
+- Te saluda, se despide o te da las gracias.
+- Necesitas una aclaración breve para entender lo que pide.
+
+Genera <|SpawnThinking|> antes de dar una respuesta que dependa del backend. No te inventes precios, fechas, normas ni localizadores mientras esperas: di algo breve y natural, como "vale, te lo miro" o "te lo voy rellenando", y cuenta el resultado cuando llegue.
+El usuario ve el formulario en pantalla mientras se rellena: no repitas todos los datos, di solo lo importante (el total, el localizador o lo que falta).
+
+Si un nombre, un email o un número no está claro, pide que lo deletree. "Arroba" es @.
+Sigue escuchando si el usuario hace una pausa para pensar. No trates toses, música o conversaciones de fondo como peticiones.`;
+
+	const LIVE_GREETING =
+		'Saluda ahora en español de España: di que eres el asistente del Spotify Camp Nou y pregunta qué partido quiere ver. Una sola frase. Luego para y escucha.';
+
+	// Prompt del backend: las reglas de negocio de siempre y cómo devolver resultados a la voz.
+	const LIVE_BACKEND_NOTE =
+		`\n\nTrabajas detrás de un asistente de voz (GPT-Live): él habla con el usuario y te pasa la conversación. ` +
+		`Devuelve resultados breves y concretos para decirlos en voz alta, sin markdown, listas ni emojis. ` +
+		`La conversación llega transcrita y puede traer errores: "arroba" es @, "punto" es ".", junta los dígitos del móvil ` +
+		`y deduce el partido o la zona aunque estén mal escritos. Usa la herramienta en cuanto tengas los datos obligatorios; si falta alguno, di cuál.`;
+
+	const liveTools = [{ type: 'function', name: toolName, description: toolDescription, parameters: buildToolParameters() }];
+
+	let liveOn = false;
+	let liveSession: LiveSession | null = null;
+	let userCaption = '';
+	let userEndMs = 0;
+	let agentCaption: { bubble: HTMLElement; text: string; endMs: number } | null = null;
+	/** Pausa a partir de la cual el mismo hablante empieza una burbuja nueva. */
+	const CAPTION_GAP = 1500;
+	/** Margen para decidir que uno empezó a hablar cuando el otro ya había terminado. */
+	const TURN_GAP = 300;
+	/** Lo hablado en la llamada; al colgar pasa al historial del chat de texto. */
+	const liveTranscript: ChatMessage[] = [];
+	let backendBusy = false;
+	let toolRunning = false;
+	let speakingUntil = 0;
+	let hearingUntil = 0;
+	let liveCopy = '';
+
+	function closeUserCaption() {
+		if (!live) return;
+		live.bubble.classList.remove('live');
+		if (userCaption.trim()) liveTranscript.push({ role: 'user', content: userCaption.trim() });
+		live = null;
+		userCaption = '';
+	}
+
+	function closeAgentCaption() {
+		if (!agentCaption) return;
+		agentCaption.bubble.classList.remove('speaking');
+		if (agentCaption.text.trim()) liveTranscript.push({ role: 'assistant', content: agentCaption.text.trim() });
+		agentCaption = null;
+	}
+
+	function renderLiveStage() {
+		const now = performance.now();
+		const connecting = liveSession?.state !== 'live';
+		const state = connecting ? 'connecting' : now < speakingUntil ? 'speaking' : now < hearingUntil ? 'hearing' : 'listening';
+		liveStage.dataset.state = state;
+		liveStage.dataset.backend = String(backendBusy || toolRunning);
+
+		const title = connecting
+			? 'Conectando…'
+			: liveSession?.muted
+				? 'Micro silenciado'
+				: state === 'speaking'
+					? 'Hablando'
+					: state === 'hearing'
+						? 'Te escucho…'
+						: 'Te escucho';
+		const sub = connecting
+			? 'Abriendo la sesión con GPT-Live'
+			: toolRunning
+				? 'Rellenando el formulario con WebMCP…'
+				: backendBusy
+					? 'gpt-6-luna está mirando la taquilla…'
+					: state === 'speaking'
+						? 'Puedes interrumpir cuando quieras'
+						: 'GPT-Live · gpt-6-luna + WebMCP';
+		const copy = `${title}|${sub}`;
+		if (copy === liveCopy) return;
+		liveCopy = copy;
+		liveTitle.textContent = title;
+		liveSub.textContent = sub;
+	}
+
+	function onLiveLevels(user: number, agent: number) {
+		liveStage.style.setProperty('--agent', agent.toFixed(3));
+		liveStage.style.setProperty('--user', user.toFixed(3));
+		const now = performance.now();
+		if (agent > 0.12) speakingUntil = now + 350;
+		if (user > 0.18) hearingUntil = now + 350;
+		renderLiveStage();
+	}
+
+	async function enterLive() {
+		if (liveOn || voiceOn || busy) return;
+		liveOn = true;
+		chatPanel.classList.add('live');
+		panelBadge.textContent = 'GPT-Live';
+		liveStage.hidden = false;
+		liveControls.hidden = false;
+		chatForm.hidden = true;
+		suggestionsEl.innerHTML = '';
+		liveMute.setAttribute('aria-pressed', 'false');
+		liveMute.querySelector('span')!.textContent = 'Silenciar';
+		userEndMs = 0;
+		liveCopy = '';
+		removeThinking();
+		// Sin conversación todavía, el saludo escrito sobra: GPT-Live saluda en voz alta.
+		if (!history.some((m) => m.role === 'user')) chatLog.innerHTML = '';
+		scrollChat();
+
+		liveSession = createLiveSession({
+			instructions: LIVE_INSTRUCTIONS,
+			backendInstructions: SYSTEM_PROMPT + LIVE_BACKEND_NOTE,
+			greeting: LIVE_GREETING,
+			tools: liveTools,
+			onState: (state) => {
+				setStatus(state === 'live' ? 'En llamada' : state === 'connecting' ? 'Conectando…' : 'En línea', state === 'connecting');
+				renderLiveStage();
+				if (state === 'closed' && liveOn) exitLive();
+			},
+			onLevels: onLiveLevels,
+			// Full duplex: los dos pueden hablar a la vez, así que cada uno tiene su burbuja abierta
+			// y se agrupa por tiempo (start_ms/end_ms), no por quién habló el último.
+			onUserText: (delta, startMs, endMs) => {
+				if (live && startMs - userEndMs > CAPTION_GAP) closeUserCaption();
+				// El asistente ya había terminado cuando empezaste: su próxima frase irá debajo.
+				if (agentCaption && startMs > agentCaption.endMs + TURN_GAP) closeAgentCaption();
+				userCaption += delta;
+				userEndMs = endMs;
+				showLive(userCaption.trim());
+			},
+			onAgentText: (delta, startMs, endMs) => {
+				if (agentCaption && startMs - agentCaption.endMs > CAPTION_GAP) closeAgentCaption();
+				if (live && startMs > userEndMs + TURN_GAP) closeUserCaption();
+				if (!agentCaption) {
+					const bubble = addAssistantMessage();
+					bubble.classList.add('speaking');
+					agentCaption = { bubble, text: '', endMs };
+				}
+				// Sin la puntuación suelta con la que a veces arranca un fragmento («. Listo…»).
+				agentCaption.text = (agentCaption.text + delta).replace(/^[\s.,;:]+/, '');
+				agentCaption.endMs = endMs;
+				agentCaption.bubble.textContent = agentCaption.text;
+				scrollChat();
+			},
+			onDelegation: () => {
+				backendBusy = true;
+				renderLiveStage();
+			},
+			onBackendDone: () => {
+				backendBusy = false;
+				renderLiveStage();
+			},
+			onToolCall: async ({ name, args }) => {
+				closeUserCaption();
+				closeAgentCaption();
+				toolRunning = true;
+				renderLiveStage();
+				const chip = addToolChip(name, args as Record<string, any>);
+				try {
+					const result =
+						name === toolName ? await runReservationTool(args as Record<string, any>) : { text: `Herramienta desconocida: ${name}`, isError: true };
+					resolveChip(chip, result.text, result.isError);
+					return result.text;
+				} finally {
+					toolRunning = false;
+					clearZoneHints();
+					renderLiveStage();
+				}
+			},
+			onError: (message) => {
+				const bubble = addAssistantMessage();
+				bubble.classList.add('error');
+				bubble.innerHTML = `GPT-Live: ${escapeHtml(message)}`;
+			},
+		});
+
+		try {
+			await liveSession.start();
+		} catch (err: any) {
+			exitLive();
+			const bubble = addAssistantMessage();
+			bubble.classList.add('error');
+			bubble.innerHTML = `No se pudo empezar la conversación en vivo.<small>${escapeHtml(err?.message ?? String(err))}</small>`;
+		}
+	}
+
+	function exitLive() {
+		if (!liveOn) return;
+		liveOn = false;
+		liveSession?.stop();
+		closeUserCaption();
+		closeAgentCaption();
+		// El chat de texto sigue la conversación donde la dejó la llamada.
+		history.push(...liveTranscript.splice(0));
+		backendBusy = false;
+		toolRunning = false;
+		clearZoneHints();
+		chatPanel.classList.remove('live');
+		panelBadge.textContent = 'WebMCP';
+		liveStage.hidden = true;
+		liveControls.hidden = true;
+		chatForm.hidden = false;
+		setStatus('En línea');
+		chatInput.focus();
+	}
+
+	liveBtn.addEventListener('click', enterLive);
+	liveEnd.addEventListener('click', exitLive);
+	liveMute.addEventListener('click', () => {
+		if (!liveSession) return;
+		const next = !liveSession.muted;
+		liveSession.setMuted(next);
+		liveMute.setAttribute('aria-pressed', String(next));
+		liveMute.querySelector('span')!.textContent = next ? 'Activar micro' : 'Silenciar';
+		renderLiveStage();
+	});
+	chatFab.addEventListener('click', () => {
+		if (!chatOpen) exitLive();
+	});
+	// GPT-Live cobra por segundo: al salir de la página se cierra la sesión.
+	window.addEventListener('pagehide', () => liveSession?.stop());
+</script>

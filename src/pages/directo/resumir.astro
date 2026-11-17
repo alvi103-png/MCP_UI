@@ -1,0 +1,182 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const reseñas = `Llevo dos meses con los auriculares y la cancelación de ruido es espectacular: en el tren no oigo nada.
+La batería dura de verdad las 30 horas que prometen, los cargo una vez por semana.
+Son cómodos, aunque después de tres horas seguidas aprietan un poco y dan calor en verano.
+El micrófono va bien en llamadas, pero con viento se oye fatal.
+La aplicación es lenta y a veces pierde la conexión con el móvil.
+Por este precio no he encontrado nada mejor. Los recomiendo para viajar y para trabajar en la oficina.`;
+---
+
+<Base title="Resumir en el navegador">
+  <h1>Resumir en local</h1>
+  <p id="estado" class="muted" role="status">Comprobando la API Summarizer…</p>
+
+  <form id="formulario">
+    <textarea name="texto" rows="8" spellcheck="false" aria-label="Texto">{reseñas}</textarea>
+    <div class="opciones">
+      <label>
+        <span class="label">type</span>
+        <select name="type">
+          <option>tldr</option>
+          <option>key-points</option>
+          <option>teaser</option>
+          <option>headline</option>
+        </select>
+      </label>
+      <label>
+        <span class="label">length</span>
+        <select name="length">
+          <option>short</option>
+          <option selected>medium</option>
+          <option>long</option>
+        </select>
+      </label>
+      <button type="submit">Resumir ▸</button>
+    </div>
+  </form>
+
+  <pre id="resumen" hidden aria-live="polite"></pre>
+</Base>
+
+<style>
+  h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    margin-bottom: 0.75rem;
+  }
+
+  form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  textarea,
+  select,
+  button {
+    font: inherit;
+    font-size: 0.87rem;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+
+  textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
+  textarea:focus,
+  select:focus {
+    border-color: var(--muted);
+    outline: none;
+  }
+
+  .opciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 1rem;
+  }
+
+  label {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  select {
+    padding: 0.35rem 0.5rem;
+  }
+
+  button {
+    margin-left: auto;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+  }
+
+  button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  button:disabled {
+    cursor: progress;
+    color: var(--muted);
+    border-color: var(--line);
+  }
+
+  pre {
+    margin-top: 1.5rem;
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+  }
+
+  .error {
+    color: var(--accent);
+  }
+</style>
+
+<script>
+  // La API Summarizer de Chrome: Gemini Nano dentro del navegador. El texto no sale del dispositivo.
+  declare const Summarizer: any;
+
+  const $estado = document.querySelector<HTMLElement>('#estado')!;
+  const $formulario = document.querySelector<HTMLFormElement>('#formulario')!;
+  const $boton = $formulario.querySelector('button')!;
+  const $resumen = document.querySelector<HTMLElement>('#resumen')!;
+
+  const IDIOMA = { expectedInputLanguages: ['es'], outputLanguage: 'es' };
+
+  function mostrarEstado(texto: string, error = false) {
+    $estado.textContent = texto;
+    $estado.classList.toggle('error', error);
+  }
+
+  const disponible = 'Summarizer' in self ? await Summarizer.availability(IDIOMA) : 'unavailable';
+  $boton.disabled = disponible === 'unavailable';
+  mostrarEstado(
+    {
+      available: 'Summarizer · Gemini Nano listo',
+      downloadable: 'Summarizer · el modelo se descargará al resumir',
+      downloading: 'Summarizer · descargando el modelo…',
+      unavailable: 'Summarizer no está disponible en este navegador',
+    }[disponible as string] ?? disponible,
+    disponible === 'unavailable',
+  );
+
+  $formulario.addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    const datos = new FormData($formulario);
+    $boton.disabled = true;
+    $resumen.hidden = false;
+    $resumen.textContent = '';
+
+    try {
+      const inicio = performance.now();
+      const summarizer = await Summarizer.create({
+        ...IDIOMA,
+        type: datos.get('type'),
+        length: datos.get('length'),
+        format: 'plain-text',
+        monitor(m: EventTarget) {
+          m.addEventListener('downloadprogress', (e: any) => mostrarEstado(`Descargando el modelo… ${Math.round(e.loaded * 100)} %`));
+        },
+      });
+
+      for await (const trozo of summarizer.summarizeStreaming(String(datos.get('texto')))) {
+        $resumen.textContent += trozo;
+      }
+
+      mostrarEstado(`Resumido en local en ${Math.round(performance.now() - inicio)} ms`);
+      summarizer.destroy();
+    } catch (error) {
+      mostrarEstado(error instanceof Error ? error.message : String(error), true);
+    } finally {
+      $boton.disabled = false;
+    }
+  });
+</script>

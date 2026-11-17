@@ -1,0 +1,787 @@
+---
+import BackLink from './BackLink.astro';
+import { SHOT_H, SHOT_W } from '../../lib/directo/mario/screen.ts';
+
+interface Props {
+	/** ram: Jev reads the RAM as JSON plus simulated futures. screen: Jev only gets a screenshot. */
+	variant: 'ram' | 'screen';
+}
+
+const { variant } = Astro.props;
+const screen = variant === 'screen';
+---
+
+<div class="app" data-variant={variant}>
+	<header>
+		<BackLink class="back" />
+		<h1>super mario bros.</h1>
+		{
+			screen ? (
+				<p class="tag">solo la captura</p>
+			) : (
+				<div class="segmented" title="L">
+					<button type="button" data-backend="jev" aria-pressed="true">jev</button>
+					<button type="button" data-backend="laya" aria-pressed="false">laya</button>
+				</div>
+			)
+		}
+		<dl class="hud">
+			<div><dt>mundo</dt><dd id="level">1-1</dd></div>
+			<div><dt>vidas</dt><dd id="lives">–</dd></div>
+			<div><dt>tiempo</dt><dd id="time">–</dd></div>
+		</dl>
+	</header>
+
+	<main>
+		<section class="game">
+			<div id="stage" class="stage">
+				<canvas id="screen" width="240" height="224"></canvas>
+				<canvas id="vision" aria-hidden="true"></canvas>
+				<label class="rom-drop">
+					<input id="rom" type="file" accept=".nes" />
+					<span>arrastra la rom .nes</span>
+				</label>
+				<button id="start" class="start" type="button" aria-label="Empezar">
+					<svg viewBox="0 0 20 20" shape-rendering="crispEdges" aria-hidden="true">
+						<path class="px-shadow" d="M18 5h1v1h-1zM19 7h1v1h-1zM19 8h1v1h-1zM19 9h1v1h-1zM19 10h1v1h-1zM19 11h1v1h-1zM19 12h1v1h-1zM18 13h2v1h-2zM18 14h1v1h-1zM17 15h2v1h-2zM16 16h2v1h-2zM15 17h2v1h-2zM5 18h1v1h-1zM13 18h3v1h-3zM7 19h7v1h-7z" />
+						<path class="px-outline" d="M6 0h7v1h-7zM4 1h2v1h-2zM13 1h2v1h-2zM3 2h1v1h-1zM15 2h1v1h-1zM2 3h1v1h-1zM16 3h1v1h-1zM1 4h1v1h-1zM17 4h1v1h-1zM1 5h1v1h-1zM17 5h1v1h-1zM0 6h1v1h-1zM18 6h1v1h-1zM0 7h1v1h-1zM18 7h1v1h-1zM0 8h1v1h-1zM18 8h1v1h-1zM0 9h1v1h-1zM18 9h1v1h-1zM0 10h1v1h-1zM18 10h1v1h-1zM0 11h1v1h-1zM18 11h1v1h-1zM0 12h1v1h-1zM18 12h1v1h-1zM1 13h1v1h-1zM17 13h1v1h-1zM1 14h1v1h-1zM17 14h1v1h-1zM2 15h1v1h-1zM16 15h1v1h-1zM3 16h1v1h-1zM15 16h1v1h-1zM4 17h2v1h-2zM13 17h2v1h-2zM6 18h7v1h-7z" />
+						<path class="px-hi" d="M6 1h7v1h-7zM4 2h2v1h-2zM3 3h1v1h-1zM2 4h1v1h-1zM2 5h1v1h-1zM1 6h1v1h-1zM1 7h1v1h-1zM1 8h1v1h-1zM1 9h1v1h-1zM1 10h1v1h-1zM1 11h1v1h-1zM1 12h1v1h-1z" />
+						<path class="px-lo" d="M17 6h1v1h-1zM17 7h1v1h-1zM17 8h1v1h-1zM17 9h1v1h-1zM17 10h1v1h-1zM17 11h1v1h-1zM17 12h1v1h-1zM16 13h1v1h-1zM16 14h1v1h-1zM15 15h1v1h-1zM13 16h2v1h-2zM6 17h7v1h-7z" />
+						<path class="px-fill" d="M6 2h9v1h-9zM4 3h12v1h-12zM3 4h14v1h-14zM3 5h5v1h-5zM10 5h7v1h-7zM2 6h6v1h-6zM11 6h6v1h-6zM2 7h6v1h-6zM12 7h5v1h-5zM2 8h6v1h-6zM13 8h4v1h-4zM2 9h6v1h-6zM14 9h3v1h-3zM2 10h6v1h-6zM13 10h4v1h-4zM2 11h6v1h-6zM12 11h5v1h-5zM2 12h6v1h-6zM11 12h6v1h-6zM2 13h6v1h-6zM10 13h6v1h-6zM2 14h14v1h-14zM3 15h12v1h-12zM4 16h9v1h-9z" />
+						<path class="px-tri" d="M8 5h2v1h-2zM8 6h3v1h-3zM8 7h4v1h-4zM8 8h5v1h-5zM8 9h6v1h-6zM8 10h5v1h-5zM8 11h4v1h-4zM8 12h3v1h-3zM8 13h2v1h-2z" />
+					</svg>
+				</button>
+			</div>
+
+			<div class="controls" role="toolbar" aria-label="Controles">
+				<button id="toggle" type="button" class="primary" aria-pressed="false" title="Espacio">jugar</button>
+				<button id="step" type="button" title="N">paso</button>
+				<button id="restart" type="button" title="R">reiniciar</button>
+				<span class="sep"></span>
+				<div class="segmented" title="M">
+					<button type="button" data-mode="sync" aria-pressed="true">turnos</button>
+					<button type="button" data-mode="realtime" aria-pressed="false">tiempo real</button>
+				</div>
+				{
+					!screen && (
+						<>
+							<button id="futures" type="button" aria-pressed="true" title="F">futuros</button>
+							<button id="shield" type="button" aria-pressed="true" title="S">escudo</button>
+							<button id="vision-toggle" type="button" aria-pressed="true" title="V">visión</button>
+						</>
+					)
+				}
+			</div>
+
+			<canvas id="timeline" class="timeline" aria-hidden="true"></canvas>
+		</section>
+
+		<aside class="panel">
+			<p id="status" class="status" data-state="paused">en pausa</p>
+
+			<div class="decision">
+				<div>
+					<p id="action" class="action">—</p>
+					<p id="shielded" class="shielded" hidden></p>
+				</div>
+				<div class="pad" aria-hidden="true">
+					<span id="pad-left" class="arrow">◀</span>
+					<span id="pad-right" class="arrow">▶</span>
+					<span id="pad-b" class="round">B</span>
+					<span id="pad-a" class="round">A</span>
+				</div>
+			</div>
+
+			<ol id="actions" class="actions"></ol>
+
+			<div class="gauges">
+				<div id="danger" class="gauge"><span>peligro</span><output>–</output></div>
+				<div id="jump" class="gauge"><span>saltar</span><output>–</output></div>
+				<div id="confidence" class="gauge"><span>confianza</span><output>–</output></div>
+			</div>
+
+			<dl class="meta">
+				<div><dt>foco</dt><dd id="focus">–</dd></div>
+				<div><dt>latencia</dt><dd id="latency">–</dd></div>
+				<div><dt>p50</dt><dd id="p50">–</dd></div>
+				<div><dt>decisiones</dt><dd id="decisions">0</dd></div>
+				<div><dt>muertes</dt><dd id="deaths">0</dd></div>
+				{screen && <div><dt>retraso</dt><dd id="delay">–</dd></div>}
+			</dl>
+
+			{
+				screen ? (
+					<figure class="shot">
+						<figcaption>lo que ve jev: solo esta imagen</figcaption>
+						<div class="shot-frame">
+							<img id="shot" alt="Última captura que recibió Jev" width={SHOT_W} height={SHOT_H} hidden />
+							<svg id="shot-boxes" viewBox={`0 0 ${SHOT_W} ${SHOT_H}`} aria-hidden="true" />
+						</div>
+						<p class="legend">cajas de jev: <span class="mario">mario</span> y <span class="hazard">el primer obstáculo</span></p>
+					</figure>
+				) : (
+					<details class="json">
+						<summary id="seen">lo que ve jev</summary>
+						<pre id="json">{}</pre>
+					</details>
+				)
+			}
+		</aside>
+	</main>
+</div>
+<script>
+	import { startMarioDemo } from '../../lib/directo/mario/app.ts';
+
+	startMarioDemo(document.querySelector<HTMLElement>('.app')?.dataset.variant === 'screen' ? 'screen' : 'ram');
+</script>
+
+<style>
+	.app {
+		display: grid;
+		grid-template-rows: auto 1fr;
+		min-height: 100dvh;
+		padding: 1rem clamp(1rem, 3vw, 2rem) 1.5rem;
+		gap: 1rem;
+		font-size: 0.8125rem;
+	}
+
+	header {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+	}
+
+	.back {
+		color: var(--muted);
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.back:hover {
+		color: var(--fg);
+	}
+
+	h1 {
+		margin: 0;
+		font-family: var(--font-pixel);
+		font-weight: 500;
+		font-size: 1.5rem;
+		letter-spacing: -0.01em;
+	}
+
+	.hud {
+		display: flex;
+		gap: 1.25rem;
+		margin: 0 0 0 auto;
+	}
+
+	.hud div,
+	.meta div {
+		display: grid;
+		gap: 0.125rem;
+	}
+
+	dt {
+		color: var(--muted);
+		font-size: 0.6875rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
+	dd {
+		margin: 0;
+		font-variant-numeric: tabular-nums;
+	}
+
+	main {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 340px;
+		gap: clamp(1rem, 2.5vw, 2rem);
+		align-items: start;
+	}
+
+	.game {
+		display: grid;
+		gap: 0.75rem;
+		min-width: 0;
+	}
+
+	.stage {
+		position: relative;
+		width: min(100%, calc((100dvh - 12rem) * 240 / 224));
+		aspect-ratio: 240 / 224;
+		margin-inline: auto;
+		background: #000;
+		border-radius: 6px;
+		overflow: hidden;
+	}
+
+	.stage canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	#screen {
+		image-rendering: pixelated;
+	}
+
+	#vision {
+		pointer-events: none;
+	}
+
+	.start {
+		--px-shadow: #14080c;
+		--px-outline: #1c0a0e;
+		--px-hi: #ffb4b8;
+		--px-fill: var(--red);
+		--px-lo: #c20e18;
+		--px-tri: #fff;
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		width: 5rem;
+		height: 5rem;
+		margin: auto;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		line-height: 0;
+		cursor: pointer;
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			opacity 0.2s ease,
+			translate 0.08s steps(1, end);
+	}
+
+	.start svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.px-shadow {
+		fill: var(--px-shadow);
+	}
+
+	.px-outline {
+		fill: var(--px-outline);
+	}
+
+	.px-hi {
+		fill: var(--px-hi);
+	}
+
+	.px-lo {
+		fill: var(--px-lo);
+	}
+
+	.px-fill {
+		fill: var(--px-fill);
+	}
+
+	.px-tri {
+		fill: var(--px-tri);
+	}
+
+	.stage[data-ready='true']:not([data-started]) .start {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.rom-drop {
+		position: absolute;
+		inset: 1rem;
+		display: none;
+		place-content: center;
+		border: 1px dashed #404040;
+		border-radius: 6px;
+		color: var(--muted);
+		cursor: pointer;
+	}
+
+	.rom-drop input {
+		position: absolute;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.stage[data-needs-rom] .rom-drop {
+		display: grid;
+	}
+
+	.rom-drop:hover {
+		color: var(--fg);
+		border-color: var(--fg);
+	}
+
+	.start:hover {
+		--px-hi: #ffd0d3;
+		--px-fill: #ff4d56;
+		--px-lo: #d41520;
+		translate: 0 -4px;
+	}
+
+	.start:active {
+		translate: 0 2px;
+	}
+
+	.controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+
+	button {
+		font: inherit;
+		color: var(--fg);
+		background: #141414;
+		border: 1px solid #262626;
+		border-radius: 999px;
+		padding: 0.45rem 0.9rem;
+		cursor: pointer;
+		transition:
+			background 0.15s,
+			border-color 0.15s,
+			color 0.15s;
+	}
+
+	button:hover {
+		border-color: #404040;
+	}
+
+	button:focus-visible {
+		outline: 2px solid var(--teal);
+		outline-offset: 2px;
+	}
+
+	button[aria-pressed='false'] {
+		color: var(--muted);
+	}
+
+	.controls button[aria-pressed='true']:not(.primary) {
+		border-color: #525252;
+	}
+
+	.primary,
+	.primary[aria-pressed='false'] {
+		min-width: 6.5rem;
+		background: var(--fg);
+		color: #000;
+		border-color: var(--fg);
+	}
+
+	.primary[aria-pressed='true'] {
+		background: transparent;
+		color: var(--fg);
+	}
+
+	.sep {
+		width: 1px;
+		height: 1.25rem;
+		background: #262626;
+	}
+
+	.segmented {
+		display: inline-flex;
+		border: 1px solid #262626;
+		border-radius: 999px;
+		padding: 2px;
+	}
+
+	.segmented button {
+		border: 0;
+		background: transparent;
+		padding: 0.35rem 0.8rem;
+	}
+
+	.segmented button[aria-pressed='true'] {
+		background: #262626;
+		color: var(--fg);
+	}
+
+	.timeline {
+		width: min(100%, calc((100dvh - 12rem) * 240 / 224));
+		height: 28px;
+		margin-inline: auto;
+	}
+
+	.panel {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		min-width: 0;
+		gap: 1.25rem;
+		position: sticky;
+		top: 1rem;
+	}
+
+	.status {
+		margin: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--muted);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-size: 0.6875rem;
+	}
+
+	.status::before {
+		content: '';
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: currentColor;
+	}
+
+	.status[data-state='playing'] {
+		color: var(--teal);
+	}
+
+	.status[data-state='thinking'] {
+		color: var(--yellow);
+	}
+
+	.status[data-state='thinking']::before {
+		animation: pulse 0.8s ease-in-out infinite alternate;
+	}
+
+	.status[data-state='error'] {
+		color: var(--red);
+		text-transform: none;
+		letter-spacing: 0;
+	}
+
+	.decision {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.action {
+		margin: 0;
+		font-family: var(--font-pixel);
+		font-size: 2.25rem;
+		line-height: 1;
+		min-height: 1em;
+	}
+
+	.shielded {
+		margin: 0.4rem 0 0;
+		color: var(--yellow);
+		font-size: 0.6875rem;
+	}
+
+	.pad {
+		display: grid;
+		grid-template-columns: repeat(4, 1.75rem);
+		gap: 0.25rem;
+		flex-shrink: 0;
+	}
+
+	.pad span {
+		display: grid;
+		place-items: center;
+		height: 1.75rem;
+		font-size: 0.6875rem;
+		color: #525252;
+		border: 1px solid #262626;
+		transition:
+			background 0.06s,
+			color 0.06s;
+	}
+
+	.pad .arrow {
+		border-radius: 4px;
+	}
+
+	.pad .round {
+		border-radius: 50%;
+	}
+
+	.pad [data-on] {
+		background: var(--fg);
+		color: #000;
+		border-color: var(--fg);
+	}
+
+	.pad .round[data-on] {
+		background: var(--red);
+		border-color: var(--red);
+	}
+
+	.actions {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 0.35rem;
+	}
+
+	.actions :global(li) {
+		display: grid;
+		grid-template-columns: 7.5rem 1fr 2rem 4.5rem;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--muted);
+	}
+
+	.actions :global(li[data-chosen]) {
+		color: var(--fg);
+	}
+
+	.actions :global(.bar) {
+		height: 6px;
+		background: #1a1a1a;
+		border-radius: 3px;
+		overflow: hidden;
+	}
+
+	.actions :global(.bar i) {
+		display: block;
+		height: 100%;
+		width: 0;
+		background: var(--color);
+		opacity: 0.5;
+		transition: width 0.25s ease-out;
+	}
+
+	.actions :global(li[data-chosen] .bar i) {
+		opacity: 1;
+	}
+
+	.actions :global(.pct) {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.actions :global(.future) {
+		font-size: 0.6875rem;
+		text-align: right;
+	}
+
+	.gauges {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.75rem;
+	}
+
+	.gauge {
+		--value: 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		padding-bottom: 0.4rem;
+		color: var(--muted);
+		font-size: 0.6875rem;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		background: linear-gradient(var(--gauge, var(--fg)) 0 0) bottom left / calc(var(--value) * 100%) 3px no-repeat,
+			linear-gradient(#1a1a1a 0 0) bottom / 100% 3px no-repeat;
+		transition: background-size 0.25s;
+	}
+
+	.gauge output {
+		color: var(--fg);
+		font-size: 0.8125rem;
+		letter-spacing: 0;
+		font-variant-numeric: tabular-nums;
+	}
+
+	#danger {
+		--gauge: var(--red);
+	}
+
+	#jump {
+		--gauge: var(--yellow);
+	}
+
+	#confidence {
+		--gauge: var(--teal);
+	}
+
+	.meta {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.75rem;
+		margin: 0;
+	}
+
+	.tag {
+		margin: 0;
+		padding: 0.3rem 0.75rem;
+		border: 1px solid #262626;
+		border-radius: 999px;
+		color: var(--muted);
+	}
+
+	.shot {
+		display: grid;
+		gap: 0.75rem;
+		margin: 0;
+	}
+
+	.shot figcaption {
+		color: var(--muted);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-size: 0.6875rem;
+	}
+
+	.shot img {
+		display: block;
+		width: 100%;
+		height: auto;
+		border: 1px solid #1a1a1a;
+		border-radius: 6px;
+		image-rendering: pixelated;
+	}
+
+	.shot img[hidden],
+	.shot-frame:has(img[hidden]) svg {
+		display: none;
+	}
+
+	.shot-frame {
+		position: relative;
+	}
+
+	.shot-frame svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	.shot-frame :global(rect) {
+		fill: none;
+		stroke-width: 3;
+	}
+
+	.shot-frame :global(.mario) {
+		stroke: #fff;
+	}
+
+	.shot-frame :global(.hazard) {
+		stroke: var(--red);
+	}
+
+	.shot-frame :global(line) {
+		stroke: var(--yellow);
+		stroke-width: 3;
+		stroke-dasharray: 6 4;
+	}
+
+	.shot-frame :global(text) {
+		fill: #fff;
+		font: 600 18px var(--font-mono);
+		paint-order: stroke;
+		stroke: #000;
+		stroke-width: 4;
+	}
+
+	.legend {
+		margin: 0;
+		color: var(--muted);
+		font-size: 0.6875rem;
+	}
+
+	.legend .mario {
+		color: #fff;
+	}
+
+	.legend .hazard {
+		color: var(--red);
+	}
+
+	/* No simulated futures without the RAM: the last column would always be empty. */
+	[data-variant='screen'] .actions :global(li) {
+		grid-template-columns: 7.5rem 1fr 2rem;
+	}
+
+	[data-variant='screen'] .actions :global(.future) {
+		display: none;
+	}
+
+	.json summary {
+		cursor: pointer;
+		color: var(--muted);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-size: 0.6875rem;
+	}
+
+	.json summary:hover {
+		color: var(--fg);
+	}
+
+	.json pre {
+		max-height: 40vh;
+		overflow: auto;
+		margin: 0.75rem 0 0;
+		padding: 0.75rem;
+		background: #0d0d0d;
+		border: 1px solid #1a1a1a;
+		border-radius: 6px;
+		font-size: 0.6875rem;
+		line-height: 1.5;
+		color: #a3a3a3;
+	}
+
+	@keyframes pulse {
+		to {
+			opacity: 0.3;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.start {
+			transition: opacity 0.2s ease;
+		}
+
+		.start:hover,
+		.start:active {
+			translate: none;
+		}
+	}
+
+	@media (max-width: 960px) {
+		main {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.stage,
+		.timeline {
+			width: 100%;
+		}
+
+		.panel {
+			position: static;
+		}
+
+		header {
+			flex-wrap: wrap;
+			row-gap: 0.5rem;
+		}
+
+		.hud {
+			gap: 0.75rem;
+		}
+
+		h1 {
+			font-size: 1.125rem;
+			white-space: nowrap;
+		}
+
+		.sep {
+			display: none;
+		}
+	}
+</style>
