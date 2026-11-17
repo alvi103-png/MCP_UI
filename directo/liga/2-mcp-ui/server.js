@@ -158,8 +158,8 @@ if (process.argv.includes('--stdio')) {
   // Para clientes que arrancan el servidor como proceso (Claude Desktop, por ejemplo)
   await crearServidor().connect(new StdioServerTransport());
 } else {
-  // Servidor HTTP en http://localhost:3003/mcp
-  const PUERTO = Number(process.env.PORT ?? 3003);
+  // Servidor HTTP en http://localhost:3102/mcp
+  const PUERTO = Number(process.env.PORT ?? 3102);
   const hostValido = localhostHostValidation();
   const origenValido = localhostOriginValidation();
 

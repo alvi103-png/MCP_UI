@@ -3,7 +3,7 @@
 // Solo llama a las herramientas que ya estén registradas, así que sirve después de cada paso.
 import { Client, StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
 
-const URL_SERVIDOR = process.env.MCP_URL ?? 'http://localhost:3003/mcp';
+const URL_SERVIDOR = process.env.MCP_URL ?? 'http://localhost:3101/mcp';
 const MAX_LINEAS = 8;
 
 const EJEMPLOS = {
