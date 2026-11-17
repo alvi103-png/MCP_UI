@@ -1,0 +1,506 @@
+---
+// La demo en directo de runonweb. El código que se descomenta está en directo/runonweb/foto.js;
+// esta página solo elige la foto y pinta lo que devuelva cada paso.
+import Base from '../../layouts/Base.astro';
+
+const fotos = [
+  { src: '/runonweb/auriculares-anc.webp', nombre: 'Auriculares con cancelación de ruido' },
+  { src: '/runonweb/mochila-viaje.webp', nombre: 'Mochila de viaje' },
+  { src: '/runonweb/botella-termica.webp', nombre: 'Botella térmica' },
+];
+
+const pasos = [
+  { id: 'fondo', n: 1, titulo: 'Quitar el fondo', modulo: 'runonweb/remove-bg', boton: 'Recortar' },
+  { id: 'describir', n: 2, titulo: 'Describir la foto', modulo: 'runonweb/caption', boton: 'Describir' },
+  { id: 'leer', n: 3, titulo: 'Leer en voz alta', modulo: 'runonweb/tts', boton: 'Leer' },
+];
+---
+
+<Base title="runonweb en directo">
+  <p class="label">IA en local · runonweb.ai</p>
+  <h1>Una foto, tres modelos</h1>
+  <p id="estado" class="muted" role="status"></p>
+
+  <div class="escena">
+    <figure class="foto">
+      <img id="foto" src={fotos[0].src} alt={fotos[0].nombre} width="560" height="560" />
+      <figcaption>
+        <ul class="miniaturas">
+          {
+            fotos.map((foto, i) => (
+              <li>
+                <button type="button" data-foto={foto.src} data-nombre={foto.nombre} aria-pressed={i === 0 ? 'true' : 'false'}>
+                  <img src={foto.src} alt={foto.nombre} width="56" height="56" />
+                </button>
+              </li>
+            ))
+          }
+          <li>
+            <label class="otra" title="O arrastra una foto a la página">
+              <input id="archivo" type="file" accept="image/*" />
+              + foto
+            </label>
+          </li>
+        </ul>
+        <button id="todo" type="button" class="todo">Todo ▸</button>
+      </figcaption>
+    </figure>
+
+    <ol class="pasos">
+      {
+        pasos.map((paso) => (
+          <li class="paso" data-paso={paso.id} data-pendiente>
+            <header>
+              <span class="n">0{paso.n}</span>
+              <h2>{paso.titulo}</h2>
+              <code>{paso.modulo}</code>
+            </header>
+            <div class="salida">
+              {paso.id === 'fondo' && <img class="recorte" alt="El producto sin fondo" hidden />}
+              {paso.id === 'describir' && <p class="texto" />}
+              {paso.id === 'leer' && <audio controls hidden />}
+              <p class="pendiente">
+                Descomenta el PASO {paso.n} en <code>directo/runonweb/foto.js</code>
+              </p>
+            </div>
+            <div class="barra" aria-hidden="true" />
+            <footer>
+              <span class="detalle muted" />
+              <button type="button" disabled>
+                {paso.boton} ▸
+              </button>
+            </footer>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</Base>
+
+<style>
+  h1 {
+    font-size: clamp(2.5rem, 7vw, 4rem);
+    margin-block: 0.5rem 0.75rem;
+  }
+
+  /* Arriba, antes y después (la foto y el recorte); debajo, a lo ancho, la descripción y la voz */
+  .escena {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .pasos {
+    display: contents;
+  }
+
+  .paso:not([data-paso='fondo']) {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 700px) {
+    .escena {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .foto {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    margin: 0;
+  }
+
+  .foto > img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: contain;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+  }
+
+  .foto figcaption {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .miniaturas {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .miniaturas button,
+  .otra {
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .miniaturas img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .miniaturas button[aria-pressed='true'] {
+    border-color: var(--accent);
+  }
+
+  .otra {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .otra:hover,
+  .otra:has(input:focus-visible) {
+    color: var(--fg);
+    border-color: var(--muted);
+  }
+
+  .otra input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  button {
+    font: inherit;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  button:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    color: var(--muted);
+    border-color: var(--line);
+  }
+
+  button[aria-busy='true'] {
+    cursor: progress;
+  }
+
+
+  .paso {
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    transition: border-color 0.2s;
+  }
+
+  .paso[data-activo] {
+    border-color: var(--accent);
+  }
+
+  .paso header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 0.75rem;
+    align-items: baseline;
+    padding: 1rem 1rem 0.75rem;
+  }
+
+  .n {
+    font-family: var(--pixel);
+    font-size: 1.25rem;
+    color: var(--accent);
+  }
+
+  .paso h2 {
+    font-size: 1rem;
+  }
+
+  .paso header code {
+    grid-column: 2;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .salida {
+    display: grid;
+    align-content: center;
+    min-height: 3.5rem;
+    padding: 0 1rem;
+  }
+
+  /* El PNG transparente sobre un tablero, como en un editor de imágenes */
+  .recorte {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    border-radius: 4px;
+    background: repeating-conic-gradient(#1c1c1c 0 25%, #121212 0 50%) 0 0 / 20px 20px;
+  }
+
+  .texto {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  audio {
+    width: 100%;
+  }
+
+  .pendiente {
+    margin: 0;
+    color: #ffb000;
+    font-size: 0.82rem;
+  }
+
+  .paso:not([data-pendiente]) .pendiente {
+    display: none;
+  }
+
+  .paso[data-pendiente] :is(header, .salida > :not(.pendiente)) {
+    opacity: 0.45;
+  }
+
+  .barra {
+    --p: 0;
+    height: 2px;
+    margin: 0.75rem 1rem 0;
+    background:
+      linear-gradient(var(--accent), var(--accent)) no-repeat 0 0 / calc(var(--p) * 100%) 100%,
+      var(--line);
+    transition: background-size 0.2s;
+  }
+
+  .paso footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem 1rem;
+  }
+
+  .detalle {
+    font-size: 0.75rem;
+  }
+
+  .error {
+    color: var(--accent);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+</style>
+
+<script>
+  import * as foto from '../../../directo/runonweb/foto.js';
+
+  type Paso = 'fondo' | 'describir' | 'leer';
+
+  // Lo que haya descomentado en directo/runonweb/foto.js
+  const { quitarFondo, describir, leer } = foto as {
+    quitarFondo?: (foto: Blob) => Promise<Blob>;
+    describir?: (foto: Blob, alEscribir?: (texto: string) => void) => Promise<string>;
+    leer?: (texto: string) => Promise<Blob>;
+  };
+  const disponibles: Record<Paso, boolean> = { fondo: !!quitarFondo, describir: !!describir, leer: !!leer };
+
+  const $ = <T extends HTMLElement>(selector: string, raiz: ParentNode = document) => raiz.querySelector<T>(selector)!;
+  const $estado = $('#estado');
+  const $foto = $<HTMLImageElement>('#foto');
+  const $todo = $<HTMLButtonElement>('#todo');
+  const $archivo = $<HTMLInputElement>('#archivo');
+
+  const tarjetas = Object.fromEntries(
+    (['fondo', 'describir', 'leer'] as Paso[]).map((paso) => {
+      const $paso = $(`[data-paso="${paso}"]`);
+      return [paso, { $paso, $boton: $<HTMLButtonElement>('footer button', $paso), $detalle: $('.detalle', $paso), $barra: $('.barra', $paso) }];
+    }),
+  ) as Record<Paso, { $paso: HTMLElement; $boton: HTMLButtonElement; $detalle: HTMLElement; $barra: HTMLElement }>;
+
+  const $recorte = $<HTMLImageElement>('.recorte');
+  const $texto = $('.texto');
+  const $audio = $<HTMLAudioElement>('audio');
+
+  let imagen: Blob | null = null;
+  let nombre = $foto.alt;
+  let ocupado = false;
+
+  function mostrarEstado(texto: string, error = false) {
+    $estado.textContent = texto;
+    $estado.className = error ? 'error' : 'muted';
+  }
+
+  function actualizarBotones() {
+    for (const [paso, { $boton }] of Object.entries(tarjetas) as [Paso, (typeof tarjetas)[Paso]][]) {
+      $boton.disabled = ocupado || !disponibles[paso];
+    }
+    $todo.disabled = ocupado || !Object.values(disponibles).some(Boolean);
+  }
+
+  // ── La descarga de cada modelo: foto.js avisa con un evento 'runonweb' ──
+
+  const descargas: Record<Paso, Map<string, { cargado: number; total: number }>> = { fondo: new Map(), describir: new Map(), leer: new Map() };
+  const mb = (bytes: number) => Math.round(bytes / 1e6);
+
+  addEventListener('runonweb', (evento) => {
+    const { paso, status, file, loaded, total } = (evento as CustomEvent).detail as {
+      paso: Paso;
+      status: string;
+      file?: string;
+      loaded?: number;
+      total?: number;
+    };
+    const tarjeta = tarjetas[paso];
+    if (!tarjeta || loaded == null || !total) return;
+    if (status !== 'progress' && status !== 'progress_total') return;
+
+    let cargado = loaded;
+    let suma = total;
+    if (status === 'progress' && file) {
+      descargas[paso].set(file, { cargado: loaded, total });
+      cargado = suma = 0;
+      for (const archivo of descargas[paso].values()) {
+        cargado += archivo.cargado;
+        suma += archivo.total;
+      }
+    }
+    tarjeta.$barra.style.setProperty('--p', String(cargado / suma));
+    tarjeta.$detalle.textContent = `descargando · ${mb(cargado)} / ${mb(suma)} MB`;
+  });
+
+  // ── Los pasos ──
+
+  async function ejecutar(paso: Paso) {
+    const { $paso, $detalle, $barra, $boton } = tarjetas[paso];
+    if (!imagen) imagen = await (await fetch($foto.src)).blob();
+    $paso.toggleAttribute('data-activo', true);
+    $boton.ariaBusy = 'true';
+    $detalle.textContent = 'cargando el modelo…';
+    $detalle.classList.remove('error');
+    const inicio = performance.now();
+
+    try {
+      if (paso === 'fondo') {
+        const png = await quitarFondo!(imagen);
+        $recorte.src = URL.createObjectURL(png);
+        $recorte.hidden = false;
+      } else if (paso === 'describir') {
+        $texto.textContent = '';
+        $texto.textContent = await describir!(imagen, (parcial) => {
+          $detalle.textContent = 'escribiendo…';
+          $texto.textContent = parcial;
+        });
+      } else {
+        // Lee la descripción del paso 2; si todavía no hay, el nombre del producto
+        const wav = await leer!($texto.textContent?.trim() || nombre);
+        $audio.src = URL.createObjectURL(wav);
+        $audio.hidden = false;
+        $audio.play().catch(() => {});
+      }
+      $barra.style.setProperty('--p', '1');
+      $detalle.textContent = `${((performance.now() - inicio) / 1000).toLocaleString('es-ES', { maximumFractionDigits: 1 })} s en tu navegador`;
+    } catch (error) {
+      $detalle.textContent = error instanceof Error ? error.message : String(error);
+      $detalle.classList.add('error');
+      throw error;
+    } finally {
+      $paso.removeAttribute('data-activo');
+      $boton.ariaBusy = null;
+    }
+  }
+
+  async function lanzar(pasosALanzar: Paso[]) {
+    if (ocupado) return;
+    ocupado = true;
+    actualizarBotones();
+    try {
+      // Uno detrás de otro: los tres modelos comparten la GPU
+      for (const paso of pasosALanzar) await ejecutar(paso);
+      mostrarEstado('Todo en local: la foto no ha salido de este ordenador');
+    } catch {
+      mostrarEstado('Algo ha fallado: mira el mensaje del paso', true);
+    } finally {
+      ocupado = false;
+      actualizarBotones();
+    }
+  }
+
+  for (const [paso, { $boton, $paso }] of Object.entries(tarjetas) as [Paso, (typeof tarjetas)[Paso]][]) {
+    $paso.toggleAttribute('data-pendiente', !disponibles[paso]);
+    $boton.addEventListener('click', () => lanzar([paso]));
+  }
+
+  $todo.addEventListener('click', () => lanzar((['fondo', 'describir', 'leer'] as Paso[]).filter((paso) => disponibles[paso])));
+
+  // ── Elegir la foto: ejemplos, archivo o arrastrar ──
+
+  function limpiarResultados() {
+    $recorte.hidden = true;
+    $texto.textContent = '';
+    $audio.hidden = true;
+    for (const { $detalle } of Object.values(tarjetas)) $detalle.textContent = '';
+  }
+
+  function elegir(nueva: Blob, url: string, nuevoNombre: string) {
+    if (ocupado) return;
+    imagen = nueva;
+    nombre = nuevoNombre;
+    $foto.src = url;
+    $foto.alt = nuevoNombre;
+    limpiarResultados();
+  }
+
+  document.querySelectorAll<HTMLButtonElement>('[data-foto]').forEach(($boton, _, $botones) => {
+    $boton.addEventListener('click', async () => {
+      if (ocupado) return;
+      $botones.forEach(($otro) => $otro.setAttribute('aria-pressed', String($otro === $boton)));
+      const url = $boton.dataset.foto!;
+      elegir(await (await fetch(url)).blob(), url, $boton.dataset.nombre!);
+    });
+  });
+
+  function elegirArchivo(archivo: File | undefined | null) {
+    if (!archivo?.type.startsWith('image/')) return;
+    document.querySelectorAll('[data-foto]').forEach(($otro) => $otro.setAttribute('aria-pressed', 'false'));
+    elegir(archivo, URL.createObjectURL(archivo), archivo.name.replace(/\.[^.]+$/, ''));
+  }
+
+  $archivo.addEventListener('change', () => elegirArchivo($archivo.files?.[0]));
+  addEventListener('dragover', (evento) => evento.preventDefault());
+  addEventListener('drop', (evento) => {
+    evento.preventDefault();
+    elegirArchivo(evento.dataTransfer?.files[0]);
+  });
+
+  // ── Arranque ──
+
+  actualizarBotones();
+  const siguiente = (['fondo', 'describir', 'leer'] as Paso[]).findIndex((paso) => !disponibles[paso]);
+  if (siguiente === -1) mostrarEstado('Elige una foto y pulsa «Todo», o lanza cada paso por separado');
+  else if (siguiente === 0) mostrarEstado('Descomenta el PASO 1 en directo/runonweb/foto.js');
+  else mostrarEstado(`${siguiente === 1 ? 'Paso 1 listo' : `Pasos 1–${siguiente} listos`}. El siguiente: PASO ${siguiente + 1} en directo/runonweb/foto.js`);
+</script>
