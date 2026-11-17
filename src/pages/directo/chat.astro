@@ -1,0 +1,585 @@
+---
+import BackLink from '../../components/directo/BackLink.astro';
+import Directo from '../../layouts/Directo.astro';
+import { NOMBRE } from '../../lib/directo/chat/modelo';
+
+const sugerencias = [
+  'Explícame qué es WebGPU en tres frases',
+  'Escribe un haiku sobre programar de madrugada',
+  '¿Qué ventajas tiene ejecutar un modelo en el navegador?',
+  'Hazme una función en JavaScript que invierta un string',
+];
+---
+
+<Directo title="Chat en local · Qwen 3.5" description="Un chat con Qwen 3.5 0.8B que se ejecuta en el navegador con WebGPU: sin servidor y sin conexión">
+  <div class="chat" id="chat">
+    <header>
+      <div class="titulo">
+        <BackLink class="atras" />
+        <h1>chat local</h1>
+      </div>
+      <div class="controles">
+        <span class="modelo">{NOMBRE}</span>
+        <button id="razonar" type="button" class="interruptor" aria-pressed="false" title="R · el modelo razona antes de responder: tarda más">
+          razonar
+        </button>
+        <button id="limpiar" type="button" class="interruptor" title="L · borrar la conversación" disabled>limpiar</button>
+      </div>
+      <p id="estado" class="estado" data-state="loading" role="status">cargando</p>
+    </header>
+    <div id="progreso" class="progreso" aria-hidden="true"></div>
+
+    <main id="mensajes" class="mensajes" aria-live="polite">
+      <section id="vacio" class="vacio">
+        <p class="kicker">transformers.js · webgpu · sin servidor</p>
+        <h2>un chat que vive en tu GPU</h2>
+        <p class="explicacion">
+          <strong>{NOMBRE}</strong> se descarga una vez (unos 790 MB) y se queda en la caché del navegador. Cuando
+          cargue, desconecta el wifi: sigue respondiendo. También entiende imágenes.
+        </p>
+        <p id="carga" class="carga">Preparando…</p>
+        <ul class="sugerencias">
+          {
+            sugerencias.map((texto) => (
+              <li>
+                <button type="button" data-sugerencia={texto} disabled>
+                  {texto}
+                  <span aria-hidden="true">→</span>
+                </button>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </main>
+
+    <form id="formulario" class="compositor">
+      <div id="adjunto" class="adjunto" hidden>
+        <img alt="Imagen adjunta" />
+        <button type="button" aria-label="Quitar la imagen">×</button>
+      </div>
+      <div class="fila">
+        <label class="imagen" title="Adjuntar una imagen (también puedes arrastrarla o pegarla)">
+          <input id="archivo" type="file" accept="image/*" />
+          <span aria-hidden="true">+ img</span>
+          <span class="sr">Adjuntar imagen</span>
+        </label>
+        <textarea id="entrada" name="texto" rows="1" placeholder="Cargando el modelo…" aria-label="Mensaje" disabled></textarea>
+        <button id="enviar" type="submit" class="enviar" disabled>enviar ▸</button>
+      </div>
+    </form>
+  </div>
+</Directo>
+
+<script>
+  import '../../lib/directo/chat/app.ts';
+</script>
+
+<style is:global>
+  .chat {
+    --surface: #0d0d0d;
+    --line: #262626;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    height: 100dvh;
+    font-size: 0.875rem;
+  }
+
+  /* display: grid/flex de las clases pisaría el atributo hidden */
+  .chat [hidden] {
+    display: none !important;
+  }
+
+  .chat header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    padding: 1rem clamp(1rem, 3vw, 2rem) 0.75rem;
+  }
+
+  .chat .titulo {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .chat .atras {
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .chat .atras:hover {
+    color: var(--fg);
+  }
+
+  .chat h1 {
+    margin: 0;
+    font-family: var(--font-pixel);
+    font-weight: 500;
+    font-size: 1.5rem;
+  }
+
+  .chat .controles {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-inline: auto;
+  }
+
+  .chat .modelo {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--fg);
+    font-size: 0.75rem;
+  }
+
+  .chat button,
+  .chat textarea {
+    font: inherit;
+    color: var(--fg);
+  }
+
+  .chat .interruptor {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: none;
+    color: var(--muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .chat .interruptor:hover:not(:disabled) {
+    color: var(--fg);
+    border-color: #404040;
+  }
+
+  .chat .interruptor[aria-pressed='true'] {
+    color: var(--yellow);
+    border-color: color-mix(in srgb, var(--yellow) 45%, transparent);
+    background: color-mix(in srgb, var(--yellow) 8%, transparent);
+  }
+
+  .chat .interruptor:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .chat .estado {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .chat .estado::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .chat .estado[data-state='loading'] {
+    color: var(--yellow);
+  }
+
+  .chat .estado[data-state='ready'] {
+    color: var(--teal);
+  }
+
+  .chat .estado[data-state='playing'],
+  .chat .estado[data-state='error'] {
+    color: var(--red);
+  }
+
+  .chat .estado:is([data-state='loading'], [data-state='playing'])::before {
+    animation: latido 0.8s ease-in-out infinite alternate;
+  }
+
+  .chat .progreso {
+    --p: 0;
+    height: 2px;
+    background:
+      linear-gradient(var(--yellow), var(--yellow)) no-repeat 0 0 / calc(var(--p) * 100%) 100%,
+      #1a1a1a;
+    transition: background-size 0.2s;
+  }
+
+  .chat .progreso[data-oculto] {
+    visibility: hidden;
+  }
+
+  .chat .mensajes {
+    overflow-y: auto;
+    padding: 2rem clamp(1rem, 3vw, 2rem);
+    scrollbar-gutter: stable both-edges;
+  }
+
+  .chat .mensajes > * {
+    width: min(100%, 46rem);
+    margin-inline: auto;
+  }
+
+  .chat .vacio {
+    display: grid;
+    align-content: center;
+    min-height: 100%;
+  }
+
+  .chat .kicker {
+    margin: 0 0 1rem;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .chat .vacio h2 {
+    margin: 0 0 1rem;
+    font-family: var(--font-pixel);
+    font-weight: 500;
+    font-size: clamp(2.25rem, 6vw, 3.5rem);
+    line-height: 0.95;
+  }
+
+  .chat .explicacion {
+    max-width: 34rem;
+    margin: 0 0 1.5rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .chat .explicacion strong {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .chat .carga {
+    margin: 0 0 1.5rem;
+    color: var(--yellow);
+    font-size: 0.75rem;
+  }
+
+  .chat .carga:empty {
+    display: none;
+  }
+
+  .chat .sugerencias {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .chat .sugerencias button {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .chat .sugerencias button:hover:not(:disabled) {
+    border-color: var(--red);
+  }
+
+  .chat .sugerencias button:hover:not(:disabled) span {
+    color: var(--red);
+  }
+
+  .chat .sugerencias button:disabled {
+    opacity: 0.4;
+    cursor: progress;
+  }
+
+  .chat .sugerencias span {
+    color: var(--muted);
+  }
+
+  /* Mensajes */
+
+  .chat .mensaje {
+    display: grid;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chat .mensaje.usuario {
+    justify-items: end;
+  }
+
+  .chat .mensaje.usuario .burbuja {
+    max-width: 80%;
+    padding: 0.6rem 0.95rem;
+    border: 1px solid var(--line);
+    border-radius: 14px 14px 4px 14px;
+    background: #141414;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .chat .mensaje.usuario img {
+    max-width: 12rem;
+    max-height: 12rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .chat .respuesta {
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+  }
+
+  .chat .respuesta > :first-child {
+    margin-top: 0;
+  }
+
+  .chat .respuesta > :last-child {
+    margin-bottom: 0;
+  }
+
+  .chat .respuesta :is(p, ul, ol, pre, blockquote, table) {
+    margin: 0 0 0.85rem;
+  }
+
+  .chat .respuesta :is(h1, h2, h3, h4) {
+    margin: 1.25rem 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  .chat .respuesta :is(ul, ol) {
+    padding-left: 1.25rem;
+  }
+
+  .chat .respuesta code {
+    font-family: inherit;
+    padding: 0.1em 0.3em;
+    border-radius: 4px;
+    background: #1a1a1a;
+    font-size: 0.85em;
+  }
+
+  .chat .respuesta pre {
+    font-family: inherit;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    overflow-x: auto;
+  }
+
+  .chat .respuesta pre code {
+    padding: 0;
+    background: none;
+  }
+
+  .chat .respuesta a {
+    color: var(--teal);
+  }
+
+  .chat .respuesta table {
+    border-collapse: collapse;
+  }
+
+  .chat .respuesta :is(th, td) {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--line);
+  }
+
+  .chat .escribiendo::after {
+    content: '▍';
+    margin-left: 0.1em;
+    color: var(--red);
+    animation: latido 0.6s steps(2, jump-none) infinite;
+  }
+
+  .chat .pensamiento {
+    border-left: 2px solid color-mix(in srgb, var(--yellow) 40%, transparent);
+    padding-left: 0.85rem;
+    color: var(--muted);
+    font-size: 0.8125rem;
+  }
+
+  .chat .pensamiento summary {
+    color: var(--yellow);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  .chat .pensamiento p {
+    margin: 0.5rem 0 0;
+    white-space: pre-wrap;
+    line-height: 1.55;
+  }
+
+  .chat .metricas {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+  }
+
+  .chat .metricas strong {
+    color: var(--teal);
+    font-weight: 500;
+  }
+
+  .chat .error {
+    color: var(--red);
+  }
+
+  /* Compositor */
+
+  .chat .compositor {
+    width: min(100% - 2rem, 46rem);
+    margin: 0 auto;
+    padding: 0.75rem 0 1.25rem;
+  }
+
+  .chat .fila {
+    display: flex;
+    align-items: end;
+    gap: 0.5rem;
+    padding: 0.4rem;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+  }
+
+  .chat .fila:focus-within {
+    border-color: #404040;
+  }
+
+  .chat .compositor.arrastrando .fila {
+    border-color: var(--teal);
+    border-style: dashed;
+  }
+
+  .chat textarea {
+    flex: 1;
+    max-height: 10rem;
+    padding: 0.5rem 0.25rem;
+    border: 0;
+    background: none;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+  }
+
+  .chat textarea::placeholder {
+    color: var(--muted);
+  }
+
+  .chat .imagen {
+    position: relative;
+    padding: 0.5rem 0.6rem;
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .chat .imagen:hover {
+    color: var(--fg);
+    background: #1a1a1a;
+  }
+
+  .chat .imagen:has(input:focus-visible) {
+    outline: 2px solid var(--teal);
+  }
+
+  .chat .imagen input,
+  .chat .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .chat .enviar {
+    padding: 0.5rem 0.9rem;
+    border: 0;
+    border-radius: 10px;
+    background: var(--red);
+    color: #000;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .chat .enviar[data-parar] {
+    background: #1a1a1a;
+    color: var(--red);
+  }
+
+  .chat .enviar:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .chat .adjunto {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+
+  .chat .adjunto img {
+    display: block;
+    height: 4rem;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .chat .adjunto button {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    width: 1.35rem;
+    height: 1.35rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: #1a1a1a;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .chat button:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+  }
+
+  @keyframes latido {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0.3;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chat *,
+    .chat *::before,
+    .chat *::after {
+      animation: none !important;
+    }
+  }
+</style>
