@@ -24,8 +24,10 @@ Vas a añadir dos funciones a la tienda: **búsqueda inteligente** y **moderaci�
 ```bash
 cd retos/03-jev/inicio
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3003
 ```
+
+Arriba tienes dos pestañas: **Tu código** (la carpeta `inicio`, la que vas a tocar) y **Ver solución** (`http://localhost:3003/solucion/`), que ejecuta la carpeta `solucion` en el mismo servidor. Mírala antes de empezar para saber cómo debe quedar, o cuando te atasques.
 
 Pega el token del taller (está en la presentación) en `retos/config.js`. Es el mismo archivo para todos los retos:
 
@@ -118,4 +120,4 @@ Une los bloques 2 y 3: en `src/webmcp.js` registra `busqueda_inteligente` para q
 - **Varias preguntas por llamada** sobre el mismo contenido.
 - Úsalo para clasificar, enrutar, moderar, ordenar o validar. Para redactar texto sigue haciendo falta un modelo generativo.
 
-¿Te has perdido? La solución está en `retos/03-jev/solucion`.
+¿Te has perdido? Pulsa **Ver solución** (con el token ya pegado) y compara tu código con el de `retos/03-jev/solucion`.

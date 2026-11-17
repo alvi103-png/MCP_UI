@@ -26,17 +26,25 @@ En las dos, `liga.js` es JavaScript normal sin nada de MCP (como `tienda.js` en 
 ```bash
 cd directo/liga/1-mcp      # o 2-mcp-ui
 npm install
-npm run dev                # http://localhost:3003/mcp
+npm run dev                # 1-mcp → http://localhost:3101/mcp · 2-mcp-ui → http://localhost:3102/mcp
 npm run probar             # en otra terminal
 ```
 
+### El chat
+
+Abre `http://localhost:3101` (o `:3102`): un chat con **GPT-6-Luna** que usa las herramientas que tenga el servidor en ese momento, y debajo las mismas herramientas para llamarlas a mano. Antes de cada pregunta vuelve a pedir `tools/list`, así que cada paso que descomentas le llega al modelo sin recargar. Si una herramienta tiene vista (MCP Apps), se pinta dentro del chat.
+
+El modelo va por el proxy de OpenAI del taller con el token de `retos/config.js` (o, si está vacío, el `WORKSHOP_TOKEN` de `.dev.vars`).
+
 ## Guion
 
-Arranca `npm run dev` y deja otra terminal para `npm run probar`: después de cada paso enseña qué ha cambiado.
+Arranca `npm run dev`, abre el chat y deja otra terminal para `npm run probar`: después de cada paso enseña qué ha cambiado.
 
 ### Parte 1 · Un MCP normal (`1-mcp/server.js`)
 
 Antes de descomentar nada, enseña `liga.js`: tres funciones que llaman a ESPN. Nada de MCP. `npm run probar` dice que el servidor aún no tiene herramientas.
+
+Pregunta en el chat «¿Quién va líder de LaLiga?»: sin herramientas, el modelo no puede saberlo y lo dice.
 
 | Paso | Qué descomentas | Qué explicas |
 | --- | --- | --- |
@@ -44,7 +52,7 @@ Antes de descomentar nada, enseña `liga.js`: tres funciones que llaman a ESPN. 
 | 2 | `ver_resultados` | Otra herramienta igual. Un servidor puede ofrecer varias |
 | 3 | `ver_equipo` | `inputSchema` con zod: el modelo sabe qué argumentos pasar. Si falla, `isError: true` |
 
-Conéctalo a un cliente y pregunta en lenguaje natural:
+Después de cada paso, pregunta otra vez en el chat (en la misma conversación). Ahora el modelo llama a la herramienta y responde con datos reales:
 
 - «¿Quién va líder de LaLiga?»
 - «¿Cómo le fue al Barça el último partido y contra quién juega ahora?»
@@ -80,14 +88,14 @@ Vuelve a hacer las mismas preguntas: ahora la respuesta es una tabla con escudos
 
 ## Clientes
 
-**MCPJam Inspector**: `npm run inspector`, añade un servidor HTTP con `http://localhost:3003/mcp` y ejecuta las herramientas.
+**MCPJam Inspector**: `npm run inspector`, añade un servidor HTTP con `http://localhost:3101/mcp` (o `:3102` para `2-mcp-ui`) y ejecuta las herramientas.
 
 **VS Code** (`.vscode/mcp.json`):
 
 ```json
 {
   "servers": {
-    "laliga": { "type": "http", "url": "http://localhost:3003/mcp" }
+    "laliga": { "type": "http", "url": "http://localhost:3101/mcp" }
   }
 }
 ```

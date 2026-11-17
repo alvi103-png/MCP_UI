@@ -85,8 +85,15 @@ Una misma tienda online, cuatro piezas:
 | Reto | Carpeta | Arrancar |
 | --- | --- | --- |
 | 1 · MCP UI | `retos/01-mcp-ui` | `npm install && npm run dev` → `http://localhost:3001/mcp` |
-| 2 · WebMCP | `retos/02-webmcp` | `npm install && npm run dev` → `http://localhost:5173` |
-| 3 · Jev | `retos/03-jev` | igual; pega el token en `retos/config.js` |
-| 4 · IA local | `retos/04-ia-local` | igual. `solucion/` es la aplicación completa |
+| 2 · WebMCP | `retos/02-webmcp` | `npm install && npm run dev` → `http://localhost:3002` |
+| 3 · Jev | `retos/03-jev` | igual → `http://localhost:3003`; pega el token en `retos/config.js` |
+| 4 · IA local | `retos/04-ia-local` | igual → `http://localhost:3004`. `solucion/` es la aplicación completa |
 
 Los retos 2, 3 y 4 comparten la misma tienda: el `inicio` de cada uno es la `solucion` del anterior. Solo cambian `src/webmcp.js`, `src/jev.js` y `src/ia-local.js`.
+
+Cada reto se arranca desde `inicio/` y su demo tiene dos pestañas, **Tu código** y **Ver solución**, para ver la carpeta `solucion/` funcionando sin arrancar otro servidor:
+
+- Reto 1: el probador (`http://localhost:3001`) habla con `/mcp` o con `/solucion/mcp`, que es el `crearServidor()` de `solucion/server.js`.
+- Retos 2–4: el plugin de Vite `retos/ver-solucion.js` (en el `vite.config.js` de cada `inicio`) sirve la carpeta `solucion` en `/solucion/` (`http://localhost:300N/solucion/`).
+
+Cada reto tiene su puerto, `300N` (N es el número del reto), y cada demo del directo el suyo a partir del `3101` (`directo/liga/1-mcp` → 3101, `directo/liga/2-mcp-ui` → 3102). Nunca coinciden, así que puedes tenerlos todos arrancados a la vez. Si añades uno nuevo, sigue el esquema.

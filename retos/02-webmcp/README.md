@@ -23,10 +23,12 @@ WebMCP está en fase de pruebas (*origin trial*). Para usarlo en local:
 ```bash
 cd retos/02-webmcp/inicio
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3002
 ```
 
 La tienda ya funciona para personas: busca, abre un producto, añade al carrito. Arriba a la derecha verás `WebMCP: sin herramientas`.
+
+Arriba tienes dos pestañas: **Tu código** (la carpeta `inicio`, la que vas a tocar) y **Ver solución** (`http://localhost:3002/solucion/`), que ejecuta la carpeta `solucion` en el mismo servidor. Mírala antes de empezar para saber cómo debe quedar, o cuando te atasques.
 
 ## Archivos
 
@@ -123,4 +125,4 @@ await document.modelContext.executeTool(buscar, { categoria: 'audio', precioMaxi
 - **Los errores, como valor**: `return { error: '…' }`. El mensaje de una excepción no llega al agente.
 - **Que el usuario lo vea**: las herramientas actualizan la misma interfaz que usa la persona.
 
-¿Te has perdido? La solución está en `retos/02-webmcp/solucion`.
+¿Te has perdido? Pulsa **Ver solución** (en la solución verás `WebMCP: 5 herramientas expuestas`) y compara tu código con el de `retos/02-webmcp/solucion`.

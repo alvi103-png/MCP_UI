@@ -25,8 +25,10 @@ Dos caminos:
 ```bash
 cd retos/04-ia-local/inicio
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:3004
 ```
+
+Arriba tienes dos pestañas: **Tu código** (la carpeta `inicio`, la que vas a tocar) y **Ver solución** (`http://localhost:3004/solucion/`), que ejecuta la carpeta `solucion` en el mismo servidor. Mírala antes de empezar para saber cómo debe quedar, o cuando te atasques.
 
 Comprueba qué tiene tu navegador. En la consola de DevTools:
 
@@ -141,7 +143,7 @@ Registra `resumir_resenas` en `src/webmcp.js`. Un agente del navegador pedirá e
 
 ## La aplicación completa
 
-`retos/04-ia-local/solucion` es la tienda con las cuatro piezas:
+`retos/04-ia-local/solucion` (la pestaña **Ver solución**) es la tienda con las cuatro piezas:
 
 - **MCP UI**: el catálogo dentro del chat (`retos/01-mcp-ui/solucion`).
 - **WebMCP**: siete herramientas y un formulario para los agentes del navegador.

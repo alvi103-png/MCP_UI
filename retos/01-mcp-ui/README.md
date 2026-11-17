@@ -85,7 +85,11 @@ npm install
 npm run dev        # servidor en http://localhost:3001/mcp (se reinicia al guardar)
 ```
 
-En otra terminal comprueba que responde:
+Abre `http://localhost:3001`: es el **probador**, una web con un chat que usa las herramientas de tu servidor y, debajo, un formulario para llamar a cada una a mano. Si la herramienta tiene interfaz, la pinta.
+
+Arriba tienes dos pestañas: **Tu código** (la carpeta `inicio`, la que vas a tocar) y **Ver solución** (`http://localhost:3001/solucion/`), que habla con el servidor de la carpeta `solucion` sin arrancar nada más. Mírala antes de empezar para saber cómo debe quedar, o cuando te atasques.
+
+También puedes comprobarlo desde la terminal, en otra pestaña:
 
 ```bash
 npm run probar
@@ -214,4 +218,4 @@ Añade un servidor HTTP con la URL `http://localhost:3001/mcp`, abre la herramie
 - La interfaz es un recurso `ui://` con HTML que el cliente muestra en un **iframe aislado**.
 - La comunicación es en los dos sentidos: `toolresult` (cliente → vista) y `callServerTool` (vista → servidor).
 
-¿Te has perdido? La solución completa está en `retos/01-mcp-ui/solucion`.
+¿Te has perdido? Pulsa **Ver solución** en el probador para ver cómo debe quedar, y compara tu código con el de `retos/01-mcp-ui/solucion`.
