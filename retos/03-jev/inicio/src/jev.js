@@ -1,7 +1,7 @@
 // Bloque 3 · Jev: decisiones rápidas y estructuradas.
 // Jev no genera texto: responde preguntas sobre un contenido (state) con datos
 // que el código usa directamente (una opción, una puntuación o una probabilidad).
-import { API_URL, TOKEN } from './config.js';
+import { API_URL, TOKEN } from '../../../config.js'; // retos/config.js
 import { todosLosProductos } from './tienda.js';
 
 /** Envía un contenido y varias preguntas a Jev. Devuelve las respuestas por nombre. */

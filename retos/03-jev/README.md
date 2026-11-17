@@ -27,10 +27,9 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Pega el token del taller (está en la presentación y en [/apis](/apis)) en `src/config.js`:
+Pega el token del taller (está en la presentación) en `retos/config.js`. Es el mismo archivo para todos los retos:
 
 ```js
-export const API_URL = 'https://upskilling-mwc-taller.midudev.workers.dev';
 export const TOKEN = 'pega-aquí-el-token';
 ```
 
